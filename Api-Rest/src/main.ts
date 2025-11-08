@@ -17,7 +17,8 @@ async function bootstrap() {
     .setTitle('API Chifles')
     .setDescription('API REST para la chiflería')
     .setVersion('1.0')
-    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'access-token')
+    // Use the name 'bearer' so it matches the security requirements added by @ApiBearerAuth()
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 'bearer')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, {

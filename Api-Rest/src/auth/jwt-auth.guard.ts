@@ -19,13 +19,20 @@ export class JwtAuthGuard implements CanActivate {
     if (isPublic) return true;
 
     const req = context.switchToHttp().getRequest();
-    const authHeader = req.headers['authorization'] || req.headers['Authorization'];
-    if (!authHeader) throw new UnauthorizedException('No se envió Authorization header');
+    const raw = req.headers['authorization'] || req.headers['Authorization'];
+    if (!raw) throw new UnauthorizedException('No se envió Authorization header');
 
-    const parts = authHeader.split(' ');
-    if (parts.length !== 2) throw new UnauthorizedException('Formato inválido de Authorization');
+    // Normalize header to a single string (in case framework provides array)
+    const header = Array.isArray(raw) ? raw[0] : String(raw);
+    let token = header.trim();
 
-    const token = parts[1];
+    // Remove any number of leading 'Bearer ' prefixes (case-insensitive)
+    while (token.toLowerCase().startsWith('bearer ')) {
+      token = token.slice(7).trim();
+    }
+
+    if (!token) throw new UnauthorizedException('Formato inválido de Authorization');
+
     const payload = this.jwtAuthService.verifyToken(token);
     req.user = payload;
     return true;
