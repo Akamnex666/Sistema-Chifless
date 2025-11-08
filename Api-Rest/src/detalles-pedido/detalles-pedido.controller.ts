@@ -1,9 +1,11 @@
 import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { DetallesPedidoService } from './detalles-pedido.service';
 import { CreateDetalleDto } from './dto/create-detalles-pedido.dto';
 import { UpdateDetallePedidoDto } from './dto/update-detalles-pedido.dto';
 import { DetallePedido } from './entities/detalles-pedido.entity';
 
+@ApiBearerAuth()
 @Controller('detalles-pedido')
 export class DetallesPedidoController {
   constructor(private readonly detallesPedidoService: DetallesPedidoService) {}

@@ -1,10 +1,12 @@
-import { Controller, Post, Body, Get, Param, Put, Delete, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { PedidosService } from './pedidos.service';
-import { CreatePedidoDto } from './dto/create-pedido.dto';4
+import { CreatePedidoDto } from './dto/create-pedido.dto';
 import { UpdatePedidoDto } from './dto/update-pedido.dto';
 import { notifyWebSocket } from '../utils/notify-ws';
 
 @Controller('pedidos')
+@ApiBearerAuth()
 export class PedidosController {
   constructor(private readonly pedidosService: PedidosService) {}
 

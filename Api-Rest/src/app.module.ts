@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { ClientesModule } from './clientes/clientes.module';
@@ -19,6 +20,8 @@ import { ProductosInsumosModule } from './productos-insumos/productos-insumos.mo
 import { OrdenesProduccionModule } from './ordenes-produccion/ordenes-produccion.module';
 import { DetallesOrdenProduccionModule } from './detalles-orden-produccion/detalles-orden-produccion.module';
 import { PedidosModule } from './pedidos/pedidos.module';
+import { AuthModule } from './auth/auth.module';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Module({
   imports: [
@@ -52,6 +55,8 @@ import { PedidosModule } from './pedidos/pedidos.module';
     ProductosInsumosModule,
     OrdenesProduccionModule,
     DetallesOrdenProduccionModule,
+    AuthModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
 export class AppModule {}

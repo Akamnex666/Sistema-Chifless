@@ -1,10 +1,12 @@
 import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { ProductosInsumosService } from './productos-insumos.service';
 import { CreateProductoInsumoDto } from './dto/create-productos-insumo.dto';
 import { UpdateProductoInsumoDto } from './dto/update-productos-insumo.dto';
 import { ProductoInsumo } from './entities/productos-insumo.entity';
 import { notifyWebSocket } from '../utils/notify-ws';
 
+@ApiBearerAuth()
 @Controller('productos-insumos')
 export class ProductosInsumosController {
   constructor(private readonly productosInsumosService: ProductosInsumosService) {}
