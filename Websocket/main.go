@@ -20,9 +20,7 @@ func main() {
     })
 
     // Ruta para notificaciones desde la API REST
-    http.HandleFunc("/notify", func(w http.ResponseWriter, r *http.Request) {
-        handlers.HandleNotify(h, w, r)
-    })
+    http.HandleFunc("/notify", handlers.NotifyEventHandler(h))
 
     fmt.Printf("Servidor WebSocket corriendo en puerto %s\n", cfg.Port)
     if err := http.ListenAndServe(":"+cfg.Port, nil); err != nil {

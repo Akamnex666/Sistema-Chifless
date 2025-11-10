@@ -1,28 +1,74 @@
 package handlers
 
 import (
-    "encoding/json"
-    "net/http"
-    "websocket/hub"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
+	"websocket/hub"
+	"websocket/models"
 )
 
-// Estructura del evento recibido desde el API REST
-type Event struct {
-    Type    string      `json:"type"`
-    Payload interface{} `json:"payload"`
+type IncomingEvent struct {
+	Type    string      `json:"type"`
+	Payload interface{} `json:"payload"`
+	Secret  string      `json:"secret,omitempty"` 
 }
 
-// Recibe eventos desde la API REST
-func HandleNotify(h *hub.Hub, w http.ResponseWriter, r *http.Request) {
-    var event Event
-    if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
-        http.Error(w, "Error al leer JSON", http.StatusBadRequest)
-        return
-    }
+func NotifyEventHandler(h *hub.Hub) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Sólo POST
+		if r.Method != http.MethodPost {
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+			return
+		}
 
-    msg, _ := json.Marshal(event)
-    h.Broadcast <- msg
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Error leyendo body", http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
 
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("Evento enviado correctamente"))
+		// Parsear JSON
+		var event IncomingEvent
+		if err := json.Unmarshal(body, &event); err != nil {
+			http.Error(w, "JSON inválido: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		providedSecret := r.Header.Get("X-WS-SECRET")
+		if providedSecret == "" {
+			providedSecret = event.Secret
+		}
+
+		if providedSecret == "" || providedSecret != os.Getenv("WS_SECRET") {
+			http.Error(w, "No autorizado", http.StatusUnauthorized)
+			return
+		}
+
+		if !models.IsValidEvent(event.Type) {
+			fmt.Println("Evento inválido recibido:", event.Type)
+			http.Error(w, "Tipo de evento inválido: "+event.Type, http.StatusBadRequest)
+			return
+		}
+
+		msg, err := json.Marshal(map[string]interface{}{
+			"type":    event.Type,
+			"payload": event.Payload,
+		})
+		if err != nil {
+			http.Error(w, "Error serializando evento", http.StatusInternalServerError)
+			return
+		}
+
+		h.Broadcast <- msg
+
+		// Log y respuesta
+		fmt.Println("Evento recibido y retransmitido:", event.Type)
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	}
 }
