@@ -40,6 +40,14 @@ export default function ClienteForm({ cliente, onSuccess }: ClienteFormProps) {
 
   const onSubmit = async (data: ClienteFormData) => {
     try {
+      // Debug logging
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        console.log('[ClienteForm] submit', { clienteId: cliente?.id, data, token });
+      } catch (e) {
+        console.warn('[ClienteForm] no se pudo leer token', e);
+      }
+
       if (cliente) {
         await updateCliente.mutateAsync({ id: cliente.id, ...data });
       } else {

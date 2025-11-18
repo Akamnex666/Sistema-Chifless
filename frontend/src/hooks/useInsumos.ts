@@ -42,7 +42,7 @@ export function useUpdateInsumo() {
   
   return useMutation({
     mutationFn: async ({ id, ...insumo }: Partial<Insumo> & { id: number }) => {
-      const { data } = await apiClient.patch(`/insumos/${id}`, insumo);
+      const { data } = await apiClient.put(`/insumos/${id}`, insumo);
       return data;
     },
     onSuccess: (_, variables) => {

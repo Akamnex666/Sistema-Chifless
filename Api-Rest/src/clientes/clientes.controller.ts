@@ -6,7 +6,10 @@ import {
   Param,
   Delete,
   Put,
+  Patch,
   ParseIntPipe,
+  Headers,
+  Logger,
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
@@ -19,6 +22,8 @@ import { notifyWebSocket } from '../utils/notify-ws';
 @ApiBearerAuth()
 @Controller('clientes')
 export class ClientesController {
+  private readonly logger = new Logger(ClientesController.name);
+
   constructor(private readonly clientesService: ClientesService) {}
 
   @Get()
@@ -45,9 +50,30 @@ export class ClientesController {
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateClienteDto,
   ) {
+    this.logger.log(`PUT /clientes/${id} - payload: ${JSON.stringify(body)}`);
     const actualizado = await this.clientesService.update(id, body);
 
-    await notifyWebSocket("client.updated", actualizado);
+    this.logger.log(`PUT /clientes/${id} - result id: ${actualizado?.id}`);
+
+    await notifyWebSocket('client.updated', actualizado);
+
+    return actualizado;
+  }
+
+  @Patch(':id')
+  async partialUpdate(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateClienteDto,
+    @Headers('authorization') authorization?: string,
+  ) {
+    // Delegar a la misma lógica de update para aceptar PATCH desde clientes externos
+    this.logger.log(`PATCH /clientes/${id} - payload: ${JSON.stringify(body)} - auth:${authorization}`);
+
+    const actualizado = await this.clientesService.update(id, body);
+
+    this.logger.log(`PATCH /clientes/${id} - result id: ${actualizado?.id}`);
+
+    await notifyWebSocket('client.updated', actualizado);
 
     return actualizado;
   }

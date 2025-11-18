@@ -103,7 +103,7 @@ export default function ProductosPage() {
           size="sm"
         >
           <div className="space-y-4">
-            <p>¿Está seguro de que desea eliminar este producto?</p>
+            <p className="text-gray-900">¿Está seguro de que desea eliminar este producto?</p>
             <div className="flex gap-2 justify-end">
               <Button variant="secondary" onClick={() => setShowDeleteConfirm(null)}>
                 Cancelar

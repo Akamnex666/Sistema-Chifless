@@ -224,6 +224,59 @@ function NotificationsComponent() {
 }
 ```
 
+## 🔐 Autenticación (JWT) — Desarrollo
+
+En este repositorio se agregó un flujo sencillo de autenticación JWT pensado para desarrollo y pruebas rápidas.
+
+- Endpoint dev en el backend: `POST /chifles/auth/login` → devuelve `{ access_token }`.
+- Frontend guarda temporalmente el `access_token` en `localStorage` (solo desarrollo).
+- El cliente HTTP `src/services/api.ts` añade automáticamente el header `Authorization: Bearer <token>` desde `localStorage`.
+- Página de login (dev): `http://localhost:7171/login` (archivo `src/app/login/page.tsx`).
+
+Flujo rápido de uso:
+
+1. Levanta el API REST (ya sea en Docker o local). Por ejemplo:
+
+```pwsh
+cd Api-Rest
+docker-compose up -d
+```
+
+2. Levanta el frontend:
+
+```pwsh
+cd frontend
+npm install
+npm run dev
+```
+
+3. Abre `http://localhost:7171/login`, pulsa "Entrar" (por defecto el formulario viene con credenciales de desarrollo).
+4. Comprueba en DevTools → Application → Local Storage que existe la clave `access_token`.
+5. Navega al dashboard o a cualquier página que haga peticiones a la API; las llamadas incluirán automáticamente el header `Authorization`.
+
+Si prefieres tomar el token desde Swagger (útil para pruebas):
+
+1. En Swagger realiza `POST /chifles/auth/login` y copia el `access_token` de la respuesta.
+2. En la consola del navegador ejecuta:
+
+```js
+localStorage.setItem('access_token', '<TOKEN_AQUI>');
+location.reload();
+```
+
+### WebSocket y token
+
+- El cliente WebSocket (`src/services/websocket.ts`) añade el token como query param: `ws://host:port/ws?token=<token>`.
+- Asegúrate de que el servidor WebSocket valide el token desde `r.URL.Query().Get("token")` y use el mismo `JWT_SECRET` del backend.
+
+### Notas de seguridad
+
+- Este flujo usa `localStorage` y es adecuado solo para desarrollo. Para producción se recomienda:
+  - Usar cookies `HttpOnly` para el refresh token.
+  - Mantener `access_token` en memoria y renovarlo con refresh token.
+  - Implementar CSRF / SameSite y políticas de CORS estrictas.
+
+
 ## 🎯 Próximas Mejoras
 
 - [ ] Completar módulo de Pedidos con detalles

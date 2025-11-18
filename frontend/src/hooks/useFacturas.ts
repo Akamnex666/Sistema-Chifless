@@ -42,7 +42,7 @@ export function useUpdateFactura() {
   
   return useMutation({
     mutationFn: async ({ id, ...factura }: Partial<Factura> & { id: number }) => {
-      const { data } = await apiClient.patch(`/factura/${id}`, factura);
+      const { data } = await apiClient.put(`/factura/${id}`, factura);
       return data;
     },
     onSuccess: (_, variables) => {

@@ -3,6 +3,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WebSocketProvider } from './WebSocketProvider';
+import { AuthProvider } from '@/context/AuthContext';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,9 +18,11 @@ const queryClient = new QueryClient({
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
-      <WebSocketProvider>
-        {children}
-      </WebSocketProvider>
+      <AuthProvider>
+        <WebSocketProvider>
+          {children}
+        </WebSocketProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

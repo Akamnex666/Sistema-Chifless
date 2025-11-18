@@ -28,6 +28,14 @@ export function useCreateCliente() {
   
   return useMutation({
     mutationFn: async (cliente: Omit<Cliente, 'id'>) => {
+      // Log request details for debugging
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        console.log('[useCreateCliente] POST', apiClient.defaults.baseURL + '/clientes', { cliente, token });
+      } catch (e) {
+        console.warn('[useCreateCliente] no se pudo leer token', e);
+      }
+
       const { data } = await apiClient.post('/clientes', cliente);
       return data;
     },
@@ -42,12 +50,34 @@ export function useUpdateCliente() {
   
   return useMutation({
     mutationFn: async ({ id, ...cliente }: Partial<Cliente> & { id: number }) => {
-      const { data } = await apiClient.patch(`/clientes/${id}`, cliente);
+      // El backend expone PUT para actualizar clientes (no PATCH), usar PUT
+      try {
+        const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+        const url = `${apiClient.defaults.baseURL}/clientes/${id}`;
+        console.log('[useUpdateCliente] PUT', url, { id, cliente, token });
+      } catch (e) {
+        console.warn('[useUpdateCliente] no se pudo leer token', e);
+      }
+
+      const { data } = await apiClient.put(`/clientes/${id}`, cliente);
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (updatedCliente, variables) => {
+      // Actualizar la cache localmente para reflejar el cambio inmediatamente
+      if (variables?.id) {
+        // actualizar lista de clientes
+        queryClient.setQueryData<Cliente[] | undefined>(['clientes'], (old) => {
+          if (!old) return old;
+          return old.map((c) => (c.id === variables.id ? (updatedCliente as Cliente) : c));
+        });
+
+        // actualizar cliente individual
+        queryClient.setQueryData<Cliente | undefined>(['clientes', variables.id], updatedCliente as Cliente);
+      }
+
+      // además invalidar para forzar refetch si es necesario
       queryClient.invalidateQueries({ queryKey: ['clientes'] });
-      queryClient.invalidateQueries({ queryKey: ['clientes', variables.id] });
+      queryClient.invalidateQueries({ queryKey: ['clientes', variables?.id] });
     },
   });
 }

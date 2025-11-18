@@ -42,7 +42,7 @@ export function useUpdateProducto() {
   
   return useMutation({
     mutationFn: async ({ id, ...producto }: Partial<Producto> & { id: number }) => {
-      const { data } = await apiClient.patch(`/productos/${id}`, producto);
+      const { data } = await apiClient.put(`/productos/${id}`, producto);
       return data;
     },
     onSuccess: (_, variables) => {

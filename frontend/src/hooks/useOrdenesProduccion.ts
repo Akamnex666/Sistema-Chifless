@@ -42,7 +42,7 @@ export function useUpdateOrdenProduccion() {
   
   return useMutation({
     mutationFn: async ({ id, ...orden }: Partial<OrdenProduccion> & { id: number }) => {
-      const { data } = await apiClient.patch(`/ordenes-produccion/${id}`, orden);
+      const { data } = await apiClient.put(`/ordenes-produccion/${id}`, orden);
       return data;
     },
     onSuccess: (_, variables) => {

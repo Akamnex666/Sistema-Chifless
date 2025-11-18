@@ -105,7 +105,7 @@ export default function ProductoForm({ producto, onSuccess }: ProductoFormProps)
         <label className="block text-sm font-medium text-gray-700">Estado *</label>
         <select
           {...register('estado', { required: 'El estado es requerido' })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
         >
           <option value="disponible">Disponible</option>
           <option value="agotado">Agotado</option>
