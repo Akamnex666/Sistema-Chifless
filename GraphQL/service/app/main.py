@@ -4,6 +4,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
 import os
+from dotenv import load_dotenv
+
+# Carga variables de entorno desde el .env en la raíz del servicio
+root = os.path.dirname(os.path.dirname(__file__))
+dotenv_path = os.path.join(root, '.env')
+load_dotenv(dotenv_path=dotenv_path)
 
 from infrastructure.http_client import RESTClient
 from interface.graphql.schema import schema, get_context
@@ -42,6 +48,23 @@ def create_app() -> FastAPI:
         # Prefer explicit API_URL env var, fallback to default
         api_url = os.getenv("API_URL") or "http://127.0.0.1:3000/chifles"
         app.state.rest = RESTClient(base_url=api_url)
+        
+        # Auto-login si no hay token configurado
+        api_token = os.getenv("API_TOKEN")
+        if not api_token:
+            try:
+                # Login automático con credenciales de desarrollo
+                login_email = os.getenv("API_LOGIN_EMAIL", "graphql-service@sistema.local")
+                login_password = os.getenv("API_LOGIN_PASSWORD", "service-password")
+                result = await app.state.rest.login(
+                    path="/auth/login",
+                    username=login_email,
+                    password=login_password
+                )
+                print(f"✅ GraphQL Service autenticado con API REST")
+            except Exception as e:
+                print(f"⚠️ No se pudo autenticar automáticamente: {e}")
+                print("   Configura API_TOKEN en .env o verifica que la API esté corriendo")
 
     @app.on_event("shutdown")
     async def _shutdown():

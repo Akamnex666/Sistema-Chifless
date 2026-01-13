@@ -39,3 +39,63 @@ class ProductoMasVendido:
     productoId: int
     productoNombre: Optional[str]
     cantidadVendida: int
+
+
+# ============ TIPOS PARA REPORTES ============
+
+@strawberry.type
+class ReporteProduccion:
+    totalOrdenesProduccion: int
+    ordenesCompletadas: int
+    ordenesPendientes: int
+    ordenesEnProceso: int
+    produccionPorProducto: List["ProduccionProducto"]
+
+
+@strawberry.type
+class ProduccionProducto:
+    productoId: int
+    productoNombre: Optional[str]
+    cantidadProducida: int
+
+
+@strawberry.type
+class ReporteInventario:
+    totalProductos: int
+    totalInsumos: int
+    productos: List["ProductoInventario"]
+    insumos: List["InsumoInventario"]
+
+
+@strawberry.type
+class ProductoInventario:
+    id: int
+    nombre: str
+    stock: float
+    precioVenta: float
+
+
+@strawberry.type
+class InsumoInventario:
+    id: int
+    nombre: str
+    stock: float
+    unidadMedida: Optional[str]
+    stockMinimo: float
+
+
+@strawberry.type
+class ReporteVentas:
+    totalVentas: float
+    totalPedidos: int
+    pedidosCompletados: int
+    pedidosPendientes: int
+    ventasPorProducto: List["VentaProducto"]
+
+
+@strawberry.type
+class VentaProducto:
+    productoId: int
+    productoNombre: Optional[str]
+    cantidadVendida: int
+    totalVendido: float
