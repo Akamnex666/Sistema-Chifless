@@ -95,13 +95,30 @@ class ReportService:
         
         # Agregar producción por producto
         produccion = {}
+        insumos_utilizados = {}
+        produccion_diaria = {}
+        
         for orden in ordenes:
+            # Producción por día
+            fecha = orden.get('fecha_inicio', '')[:10] if orden.get('fecha_inicio') else 'sin_fecha'
+            if fecha not in produccion_diaria:
+                produccion_diaria[fecha] = 0
+            produccion_diaria[fecha] += 1
+            
+            # Producción por producto
+            prod_id = orden.get('productoId')
+            if prod_id:
+                if prod_id not in produccion:
+                    produccion[prod_id] = {'productoId': prod_id, 'cantidadProducida': 0}
+                produccion[prod_id]['cantidadProducida'] += int(orden.get('cantidad_producir', 0))
+            
+            # Insumos utilizados
             for detalle in orden.get('detalles', []):
-                prod_id = detalle.get('productoId')
-                if prod_id:
-                    if prod_id not in produccion:
-                        produccion[prod_id] = {'productoId': prod_id, 'cantidadProducida': 0}
-                    produccion[prod_id]['cantidadProducida'] += int(detalle.get('cantidad_producida', 0))
+                insumo_id = detalle.get('insumoId')
+                if insumo_id:
+                    if insumo_id not in insumos_utilizados:
+                        insumos_utilizados[insumo_id] = {'id_insumo': insumo_id, 'cantidad_utilizada': 0}
+                    insumos_utilizados[insumo_id]['cantidad_utilizada'] += float(detalle.get('cantidad_utilizada', 0))
         
         # Enriquecer con nombres de productos
         produccion_lista = []
@@ -113,12 +130,33 @@ class ReportService:
                 item['productoNombre'] = None
             produccion_lista.append(item)
         
+        # Enriquecer insumos con nombres
+        insumos_lista = []
+        for insumo_id, item in insumos_utilizados.items():
+            try:
+                insumo = await self.rest.get(f'/insumos/{insumo_id}')
+                item['nombre'] = insumo.get('nombre', '')
+            except:
+                item['nombre'] = ''
+            insumos_lista.append(item)
+        
+        # Ordenar insumos por cantidad utilizada
+        insumos_lista.sort(key=lambda x: x['cantidad_utilizada'], reverse=True)
+        
+        # Formatear producción por día
+        produccion_por_dia = [
+            {'fecha': fecha, 'cantidad_ordenes': cantidad}
+            for fecha, cantidad in sorted(produccion_diaria.items())
+        ]
+        
         return {
             'totalOrdenesProduccion': len(ordenes),
             'ordenesCompletadas': completadas,
             'ordenesPendientes': pendientes,
             'ordenesEnProceso': en_proceso,
-            'produccionPorProducto': produccion_lista
+            'produccionPorProducto': produccion_lista,
+            'insumosMasUtilizados': insumos_lista[:10],
+            'produccionPorDia': produccion_por_dia
         }
 
     async def reporte_inventario(self) -> Dict[str, Any]:
@@ -126,32 +164,45 @@ class ReportService:
         productos = await self.rest.get('/productos')
         insumos = await self.rest.get('/insumos')
         
-        productos_lista = [
-            {
+        valor_inventario = 0.0
+        productos_lista = []
+        for p in productos:
+            precio = float(p.get('precio', p.get('precio_venta', p.get('precioVenta', 0))))
+            stock = float(p.get('stock', 0))
+            valor_inventario += precio * stock
+            productos_lista.append({
                 'id': p.get('id'),
                 'nombre': p.get('nombre', ''),
-                'stock': float(p.get('stock', 0)),
-                'precioVenta': float(p.get('precio_venta', p.get('precioVenta', 0)))
-            }
-            for p in productos
-        ]
+                'stock': stock,
+                'precioVenta': precio
+            })
         
-        insumos_lista = [
-            {
+        insumos_lista = []
+        insumos_stock_bajo = []
+        for i in insumos:
+            stock = float(i.get('stock', 0))
+            stock_minimo = float(i.get('stock_minimo', i.get('stockMinimo', 10)))
+            insumo_data = {
                 'id': i.get('id'),
                 'nombre': i.get('nombre', ''),
-                'stock': float(i.get('stock', 0)),
+                'stock': stock,
                 'unidadMedida': i.get('unidad_medida', i.get('unidadMedida')),
-                'stockMinimo': float(i.get('stock_minimo', i.get('stockMinimo', 0)))
+                'stockMinimo': stock_minimo,
+                'precio_unitario': float(i.get('precio_unitario', 0))
             }
-            for i in insumos
-        ]
+            insumos_lista.append(insumo_data)
+            
+            # Detectar stock bajo
+            if stock <= stock_minimo:
+                insumos_stock_bajo.append(insumo_data)
         
         return {
             'totalProductos': len(productos),
             'totalInsumos': len(insumos),
             'productos': productos_lista,
-            'insumos': insumos_lista
+            'insumos': insumos_lista,
+            'insumosStockBajo': insumos_stock_bajo,
+            'valorInventario': valor_inventario
         }
 
     async def reporte_ventas(self, fechaInicio: str = None, fechaFin: str = None) -> Dict[str, Any]:
@@ -169,9 +220,19 @@ class ReportService:
         completados = sum(1 for p in pedidos if p.get('estado', '').lower() in ['completado', 'entregado', 'pagado'])
         pendientes = sum(1 for p in pedidos if p.get('estado', '').lower() in ['pendiente', 'nuevo', 'en_proceso'])
         
-        # Agregar ventas por producto
+        # Agregar ventas por producto y por día
         ventas = {}
+        ventas_diarias = {}
+        
         for pedido in pedidos:
+            # Ventas por día
+            fecha = pedido.get('fecha', '')[:10] if pedido.get('fecha') else 'sin_fecha'
+            if fecha not in ventas_diarias:
+                ventas_diarias[fecha] = {'total': 0, 'cantidad': 0}
+            ventas_diarias[fecha]['total'] += float(pedido.get('total', 0))
+            ventas_diarias[fecha]['cantidad'] += 1
+            
+            # Ventas por producto
             for detalle in pedido.get('detalles', []):
                 prod_id = detalle.get('productoId')
                 if prod_id:
@@ -195,10 +256,17 @@ class ReportService:
         # Ordenar por cantidad vendida
         ventas_lista.sort(key=lambda x: x['cantidadVendida'], reverse=True)
         
+        # Formatear ventas por día
+        ventas_por_dia = [
+            {'fecha': fecha, 'total': data['total'], 'cantidad': data['cantidad']}
+            for fecha, data in sorted(ventas_diarias.items())
+        ]
+        
         return {
             'totalVentas': total_ventas,
             'totalPedidos': len(pedidos),
             'pedidosCompletados': completados,
             'pedidosPendientes': pendientes,
-            'ventasPorProducto': ventas_lista
+            'ventasPorProducto': ventas_lista,
+            'ventasPorDia': ventas_por_dia
         }

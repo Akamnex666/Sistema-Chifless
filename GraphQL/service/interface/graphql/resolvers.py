@@ -9,11 +9,15 @@ from interface.graphql.types import (
     ProductoMasVendido,
     ReporteProduccion,
     ProduccionProducto,
+    InsumoUtilizado,
+    ProduccionDiaria,
     ReporteInventario,
     ProductoInventario,
     InsumoInventario,
     ReporteVentas,
     VentaProducto,
+    ProductoVendidoReporte,
+    VentaDiaria,
 )
 from graphql import GraphQLError
 import httpx
@@ -120,12 +124,31 @@ class Query:
             for p in data.get('produccionPorProducto', [])
         ]
         
+        insumos_mas_utilizados = [
+            InsumoUtilizado(
+                idInsumo=int(i['id_insumo']),
+                nombre=i.get('nombre', ''),
+                cantidadUtilizada=float(i.get('cantidad_utilizada', 0))
+            )
+            for i in data.get('insumosMasUtilizados', [])
+        ]
+        
+        produccion_por_dia = [
+            ProduccionDiaria(
+                fecha=p['fecha'],
+                cantidadOrdenes=int(p.get('cantidad_ordenes', 0))
+            )
+            for p in data.get('produccionPorDia', [])
+        ]
+        
         return ReporteProduccion(
             totalOrdenesProduccion=int(data.get('totalOrdenesProduccion', 0)),
             ordenesCompletadas=int(data.get('ordenesCompletadas', 0)),
             ordenesPendientes=int(data.get('ordenesPendientes', 0)),
             ordenesEnProceso=int(data.get('ordenesEnProceso', 0)),
-            produccionPorProducto=produccion_por_producto
+            produccionPorProducto=produccion_por_producto,
+            insumosMasUtilizados=insumos_mas_utilizados,
+            produccionPorDia=produccion_por_dia
         )
 
     @strawberry.field
@@ -153,16 +176,31 @@ class Query:
                 nombre=i.get('nombre', ''),
                 stock=float(i.get('stock', 0)),
                 unidadMedida=i.get('unidadMedida'),
-                stockMinimo=float(i.get('stockMinimo', 0))
+                stockMinimo=float(i.get('stockMinimo', 0)),
+                precioUnitario=float(i.get('precio_unitario', 0))
             )
             for i in data.get('insumos', [])
+        ]
+        
+        insumos_stock_bajo = [
+            InsumoInventario(
+                id=int(i['id']),
+                nombre=i.get('nombre', ''),
+                stock=float(i.get('stock', 0)),
+                unidadMedida=i.get('unidadMedida'),
+                stockMinimo=float(i.get('stockMinimo', 0)),
+                precioUnitario=float(i.get('precio_unitario', 0))
+            )
+            for i in data.get('insumosStockBajo', [])
         ]
         
         return ReporteInventario(
             totalProductos=int(data.get('totalProductos', 0)),
             totalInsumos=int(data.get('totalInsumos', 0)),
             productos=productos,
-            insumos=insumos
+            insumos=insumos,
+            insumosStockBajo=insumos_stock_bajo,
+            valorInventario=float(data.get('valorInventario', 0))
         )
 
     @strawberry.field
@@ -184,10 +222,32 @@ class Query:
             for v in data.get('ventasPorProducto', [])
         ]
         
+        productos_mas_vendidos = [
+            ProductoVendidoReporte(
+                idProducto=int(v['productoId']),
+                nombre=v.get('productoNombre', ''),
+                cantidadVendida=int(v.get('cantidadVendida', 0)),
+                totalVendido=float(v.get('totalVendido', 0))
+            )
+            for v in data.get('ventasPorProducto', [])
+        ]
+        
+        ventas_por_dia = [
+            VentaDiaria(
+                fecha=v['fecha'],
+                total=float(v.get('total', 0)),
+                cantidad=int(v.get('cantidad', 0))
+            )
+            for v in data.get('ventasPorDia', [])
+        ]
+        
         return ReporteVentas(
             totalVentas=float(data.get('totalVentas', 0)),
             totalPedidos=int(data.get('totalPedidos', 0)),
+            cantidadPedidos=int(data.get('totalPedidos', 0)),
             pedidosCompletados=int(data.get('pedidosCompletados', 0)),
             pedidosPendientes=int(data.get('pedidosPendientes', 0)),
-            ventasPorProducto=ventas_por_producto
+            ventasPorProducto=ventas_por_producto,
+            productosMasVendidos=productos_mas_vendidos,
+            ventasPorDia=ventas_por_dia
         )

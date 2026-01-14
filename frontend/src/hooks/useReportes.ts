@@ -9,16 +9,19 @@ const GET_REPORTE_VENTAS = gql`
     reporteVentas(fechaInicio: $fechaInicio, fechaFin: $fechaFin) {
       totalVentas
       cantidadPedidos
+      totalPedidos
+      pedidosCompletados
+      pedidosPendientes
       ventasPorDia {
         fecha
         total
         cantidad
       }
       productosMasVendidos {
-        id_producto
+        idProducto
         nombre
-        cantidad_vendida
-        total_vendido
+        cantidadVendida
+        totalVendido
       }
     }
   }
@@ -28,14 +31,17 @@ const GET_REPORTE_PRODUCCION = gql`
   query GetReporteProduccion($fechaInicio: String, $fechaFin: String) {
     reporteProduccion(fechaInicio: $fechaInicio, fechaFin: $fechaFin) {
       totalOrdenesProduccion
+      ordenesCompletadas
+      ordenesPendientes
+      ordenesEnProceso
       insumosMasUtilizados {
-        id_insumo
+        idInsumo
         nombre
-        cantidad_utilizada
+        cantidadUtilizada
       }
       produccionPorDia {
         fecha
-        cantidad_ordenes
+        cantidadOrdenes
       }
     }
   }
@@ -46,15 +52,28 @@ const GET_REPORTE_INVENTARIO = gql`
     reporteInventario {
       totalProductos
       totalInsumos
+      valorInventario
       insumosStockBajo {
         id
         nombre
-        unidad_medida
+        unidadMedida
         stock
-        stock_minimo
-        precio_unitario
+        stockMinimo
+        precioUnitario
       }
-      valorInventario
+      productos {
+        id
+        nombre
+        stock
+        precioVenta
+      }
+      insumos {
+        id
+        nombre
+        stock
+        unidadMedida
+        stockMinimo
+      }
     }
   }
 `;

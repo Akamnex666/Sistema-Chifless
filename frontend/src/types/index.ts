@@ -152,6 +152,9 @@ export interface NotificationMessage {
 export interface ReporteVentas {
   totalVentas: number;
   cantidadPedidos: number;
+  totalPedidos: number;
+  pedidosCompletados: number;
+  pedidosPendientes: number;
   ventasPorDia: VentaDiaria[];
   productosMasVendidos: ProductoVendido[];
 }
@@ -163,32 +166,61 @@ export interface VentaDiaria {
 }
 
 export interface ProductoVendido {
-  id_producto: number;
+  idProducto: number;
   nombre: string;
-  cantidad_vendida: number;
-  total_vendido: number;
+  cantidadVendida: number;
+  totalVendido: number;
 }
 
 export interface ReporteProduccion {
   totalOrdenesProduccion: number;
+  ordenesCompletadas: number;
+  ordenesPendientes: number;
+  ordenesEnProceso: number;
   insumosMasUtilizados: InsumoUtilizado[];
   produccionPorDia: ProduccionDiaria[];
 }
 
 export interface InsumoUtilizado {
-  id_insumo: number;
+  idInsumo: number;
   nombre: string;
-  cantidad_utilizada: number;
+  cantidadUtilizada: number;
 }
 
 export interface ProduccionDiaria {
   fecha: string;
-  cantidad_ordenes: number;
+  cantidadOrdenes: number;
 }
 
 export interface ReporteInventario {
   totalProductos: number;
   totalInsumos: number;
-  insumosStockBajo: Insumo[];
+  insumosStockBajo: InsumoStockBajo[];
   valorInventario: number;
+  productos: ProductoInventario[];
+  insumos: InsumoInventario[];
+}
+
+export interface InsumoStockBajo {
+  id: number;
+  nombre: string;
+  unidadMedida: string;
+  stock: number;
+  stockMinimo: number;
+  precioUnitario: number;
+}
+
+export interface ProductoInventario {
+  id: number;
+  nombre: string;
+  stock: number;
+  precioVenta: number;
+}
+
+export interface InsumoInventario {
+  id: number;
+  nombre: string;
+  stock: number;
+  unidadMedida: string;
+  stockMinimo: number;
 }

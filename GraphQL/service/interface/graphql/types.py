@@ -50,6 +50,8 @@ class ReporteProduccion:
     ordenesPendientes: int
     ordenesEnProceso: int
     produccionPorProducto: List["ProduccionProducto"]
+    insumosMasUtilizados: List["InsumoUtilizado"]
+    produccionPorDia: List["ProduccionDiaria"]
 
 
 @strawberry.type
@@ -60,11 +62,26 @@ class ProduccionProducto:
 
 
 @strawberry.type
+class InsumoUtilizado:
+    idInsumo: int
+    nombre: str
+    cantidadUtilizada: float
+
+
+@strawberry.type
+class ProduccionDiaria:
+    fecha: str
+    cantidadOrdenes: int
+
+
+@strawberry.type
 class ReporteInventario:
     totalProductos: int
     totalInsumos: int
     productos: List["ProductoInventario"]
     insumos: List["InsumoInventario"]
+    insumosStockBajo: List["InsumoInventario"]
+    valorInventario: float
 
 
 @strawberry.type
@@ -82,15 +99,19 @@ class InsumoInventario:
     stock: float
     unidadMedida: Optional[str]
     stockMinimo: float
+    precioUnitario: Optional[float] = 0.0
 
 
 @strawberry.type
 class ReporteVentas:
     totalVentas: float
     totalPedidos: int
+    cantidadPedidos: int
     pedidosCompletados: int
     pedidosPendientes: int
     ventasPorProducto: List["VentaProducto"]
+    productosMasVendidos: List["ProductoVendidoReporte"]
+    ventasPorDia: List["VentaDiaria"]
 
 
 @strawberry.type
@@ -99,3 +120,18 @@ class VentaProducto:
     productoNombre: Optional[str]
     cantidadVendida: int
     totalVendido: float
+
+
+@strawberry.type
+class ProductoVendidoReporte:
+    idProducto: int
+    nombre: str
+    cantidadVendida: int
+    totalVendido: float
+
+
+@strawberry.type
+class VentaDiaria:
+    fecha: str
+    total: float
+    cantidad: int
