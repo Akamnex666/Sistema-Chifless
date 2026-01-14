@@ -1,34 +1,29 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags, ApiProperty } from '@nestjs/swagger';
-import { JwtAuthService } from './jwt-auth.service';
+import { Controller, Get, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from './public.decorator';
-import { IsEmail, IsString } from 'class-validator';
-
-class LoginDto {
-  @ApiProperty({ example: 'dev@example.com' })
-  @IsEmail()
-  email: string;
-
-  @ApiProperty({ example: 'cualquier-cosa' })
-  @IsString()
-  password: string;
-}
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly jwtAuthService: JwtAuthService) {}
-
-  @Post('login')
+  @Get('info')
   @Public()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login y obtención de JWT (dev only)' })
-  @ApiBody({ type: LoginDto })
-  @ApiResponse({ status: 200, description: 'Retorna access_token' })
-  login(@Body() body: LoginDto) {
-    // Dev-only: no validation against DB. In production validate credentials.
-    const payload = { sub: body.email, email: body.email };
-    const token = this.jwtAuthService.signToken(payload, '1h');
-    return { access_token: token };
+  @ApiOperation({ summary: 'Información del Auth Service' })
+  @ApiResponse({ status: 200, description: 'Retorna información del Auth Service' })
+  info() {
+    return {
+      message: 'Para autenticación, use el Auth Service',
+      authService: {
+        url: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
+        endpoints: {
+          register: 'POST /api/auth/register',
+          login: 'POST /api/auth/login',
+          refresh: 'POST /api/auth/refresh',
+          logout: 'POST /api/auth/logout',
+          me: 'GET /api/auth/me',
+          validate: 'GET /api/auth/validate',
+        },
+      },
+    };
   }
 }

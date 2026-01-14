@@ -34,6 +34,12 @@ export class JwtAuthGuard implements CanActivate {
     if (!token) throw new UnauthorizedException('Formato inválido de Authorization');
 
     const payload = this.jwtAuthService.verifyToken(token);
+
+    // Validar que sea un access token del Auth-Service
+    if (payload.type && payload.type !== 'access') {
+      throw new UnauthorizedException('Se requiere un access token');
+    }
+
     req.user = payload;
     return true;
   }
