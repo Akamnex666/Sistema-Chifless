@@ -4,6 +4,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,6 +14,7 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -50,6 +52,46 @@ export class AuthController {
     return {
       message: 'Usuario registrado exitosamente',
       user,
+    };
+  }
+
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Iniciar sesión y obtener tokens' })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Login exitoso',
+    schema: {
+      example: {
+        message: 'Login exitoso',
+        user: {
+          id: 'uuid',
+          email: 'admin@chifles.com',
+          nombre: 'Administrador',
+          activo: true,
+        },
+        tokens: {
+          accessToken: 'eyJhbGciOiJIUzI1NiIs...',
+          refreshToken: 'eyJhbGciOiJIUzI1NiIs...',
+          accessExpiresIn: 900000,
+          refreshExpiresIn: 604800000,
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Credenciales inválidas',
+  })
+  async login(
+    @Body() loginDto: LoginDto,
+    @Headers('user-agent') userAgent?: string,
+  ) {
+    const result = await this.authService.login(loginDto, userAgent);
+    return {
+      message: 'Login exitoso',
+      ...result,
     };
   }
 }

@@ -2,12 +2,21 @@ import {
   Injectable,
   ConflictException,
   InternalServerErrorException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, MoreThan } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/user.entity';
+import { RefreshToken } from '../tokens/refresh-token.entity';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { JwtService, TokenPair } from './jwt.service';
+
+export interface LoginResponse {
+  user: Omit<User, 'password'>;
+  tokens: TokenPair;
+}
 
 @Injectable()
 export class AuthService {
@@ -16,6 +25,9 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @InjectRepository(RefreshToken)
+    private readonly refreshTokenRepository: Repository<RefreshToken>,
+    private readonly jwtService: JwtService,
   ) {}
 
   /**
@@ -83,5 +95,48 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  /**
+   * Login: valida credenciales y genera tokens
+   */
+  async login(loginDto: LoginDto, deviceInfo?: string): Promise<LoginResponse> {
+    const { email, password } = loginDto;
+
+    const user = await this.validateCredentials(email, password);
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    // Generar par de tokens
+    const tokens = this.jwtService.generateTokenPair(user.id, user.email);
+
+    // Guardar refresh token en BD
+    const refreshToken = this.refreshTokenRepository.create({
+      token: tokens.refreshToken,
+      userId: user.id,
+      expiresAt: this.jwtService.getRefreshTokenExpiration(),
+      deviceInfo,
+    });
+
+    await this.refreshTokenRepository.save(refreshToken);
+
+    // Retornar usuario sin password + tokens
+    const { password: _, ...userWithoutPassword } = user;
+
+    return {
+      user: userWithoutPassword,
+      tokens,
+    };
+  }
+
+  /**
+   * Busca un usuario por ID
+   */
+  async findById(id: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: { id },
+    });
   }
 }
