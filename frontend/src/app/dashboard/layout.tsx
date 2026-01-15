@@ -2,36 +2,35 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    try {
-      const token = localStorage.getItem('access_token');
-      let isInvalidToken =
-        !token || token === 'null' || token === 'undefined' || token.trim() === '' || (token.split && token.split('.').length !== 3);
-      try {
-        if (!isInvalidToken && token) {
-          const payloadStr = token.split('.')[1];
-          const decoded = JSON.parse(atob(payloadStr.replace(/-/g, '+').replace(/_/g, '/')));
-          if (decoded && decoded.exp) {
-            const nowSec = Math.floor(Date.now() / 1000);
-            if (decoded.exp <= nowSec) isInvalidToken = true;
-          }
-        }
-      } catch (e) {
-        isInvalidToken = true;
-      }
+    // Esperar a que termine de cargar el estado de autenticación
+    if (isLoading) return;
 
-      if (isInvalidToken) {
-        try { localStorage.removeItem('access_token'); } catch (e) {}
-        router.replace('/');
-      }
-    } catch (e) {
-      router.replace('/');
+    // Si no está autenticado, redirigir al login
+    if (!isAuthenticated) {
+      router.replace('/login');
     }
-  }, [router]);
+  }, [router, isAuthenticated, isLoading]);
+
+  // Mostrar nada mientras se verifica la autenticación
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-500">Verificando autenticación...</div>
+      </div>
+    );
+  }
+
+  // Si no está autenticado, no renderizar el contenido
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return <>{children}</>;
 }

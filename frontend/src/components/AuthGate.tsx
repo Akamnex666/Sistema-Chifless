@@ -2,63 +2,34 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 export default function AuthGate() {
   const router = useRouter();
   const pathname = usePathname();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    try {
-      // Rutas públicas donde no queremos forzar redirect
-      const publicPaths = ['/', '/login', '/api', '/api-docs'];
+    // Esperar a que termine de cargar el estado de autenticación
+    if (isLoading) return;
 
-      // Si estamos en una ruta pública y hay token, enviar al dashboard
-      const token = localStorage.getItem('access_token');
+    // Rutas públicas donde no queremos forzar redirect
+    const publicPaths = ['/', '/login', '/api', '/api-docs'];
 
-      // Basic token sanity checks: remove obviously invalid values
-      let isInvalidToken =
-        !token || token === 'null' || token === 'undefined' || token.trim() === '' || (token.split && token.split('.').length !== 3);
-
-      // If token looks like a JWT, try to decode payload and check `exp`
-      try {
-        if (!isInvalidToken && token) {
-          const payloadStr = token.split('.')[1];
-          const decoded = JSON.parse(atob(payloadStr.replace(/-/g, '+').replace(/_/g, '/')));
-          if (decoded && decoded.exp) {
-            const nowSec = Math.floor(Date.now() / 1000);
-            if (decoded.exp <= nowSec) {
-              isInvalidToken = true; // expired
-            }
-          }
-        }
-      } catch (e) {
-        // If decode fails, treat as invalid
-        isInvalidToken = true;
+    // Si estamos en una ruta pública
+    if (publicPaths.includes(pathname || '')) {
+      // Si el usuario está autenticado y está en login o home, redirigir al dashboard
+      if ((pathname === '/' || pathname === '/login') && isAuthenticated) {
+        router.replace('/dashboard');
       }
-
-      if (isInvalidToken) {
-        try {
-          localStorage.removeItem('access_token');
-        } catch (e) {
-          // ignore
-        }
-      }
-
-      if (publicPaths.includes(pathname || '')) {
-        if ((pathname === '/' || pathname === '/login') && !isInvalidToken && token) {
-          router.replace('/dashboard');
-        }
-        return;
-      }
-
-      // Para rutas privadas, exigir token válido
-      if (!token || isInvalidToken) {
-        router.replace('/');
-      }
-    } catch (e) {
-      router.replace('/');
+      return;
     }
-  }, [router, pathname]);
+
+    // Para rutas privadas, exigir autenticación
+    if (!isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [router, pathname, isAuthenticated, isLoading]);
 
   return null;
 }
