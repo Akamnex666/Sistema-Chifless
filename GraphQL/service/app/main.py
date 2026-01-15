@@ -11,7 +11,7 @@ root = os.path.dirname(os.path.dirname(__file__))
 dotenv_path = os.path.join(root, '.env')
 load_dotenv(dotenv_path=dotenv_path)
 
-from infrastructure.http_client import RESTClient
+from infrastructure.http_client import RESTClient, AuthClient
 from interface.graphql.schema import schema, get_context
 
 
@@ -45,32 +45,52 @@ def create_app() -> FastAPI:
     # Attach REST client in app.state on startup
     @app.on_event("startup")
     async def _startup():
-        # Prefer explicit API_URL env var, fallback to default
+        # URLs de los servicios
         api_url = os.getenv("API_URL") or "http://127.0.0.1:3000/chifles"
-        app.state.rest = RESTClient(base_url=api_url)
+        auth_url = os.getenv("AUTH_SERVICE_URL") or "http://127.0.0.1:3001/api"
         
-        # Auto-login si no hay token configurado
+        # Crear cliente REST (sin token inicialmente)
+        app.state.rest = RESTClient(base_url=api_url)
+        app.state.auth = AuthClient(base_url=auth_url)
+        
+        # Intentar obtener token
         api_token = os.getenv("API_TOKEN")
-        if not api_token:
+        
+        if api_token:
+            # Si hay token configurado, usarlo directamente
+            app.state.rest.set_token(api_token)
+            print(f"✅ GraphQL Service usando token configurado en API_TOKEN")
+        else:
+            # Auto-login con Auth-Service
             try:
-                # Login automático con credenciales de desarrollo
-                login_email = os.getenv("API_LOGIN_EMAIL", "graphql-service@sistema.local")
-                login_password = os.getenv("API_LOGIN_PASSWORD", "service-password")
-                result = await app.state.rest.login(
-                    path="/auth/login",
-                    username=login_email,
-                    password=login_password
-                )
-                print(f"✅ GraphQL Service autenticado con API REST")
+                login_email = os.getenv("API_LOGIN_EMAIL", "admin@chifles.com")
+                login_password = os.getenv("API_LOGIN_PASSWORD", "Admin123!")
+                
+                result = await app.state.auth.login(login_email, login_password)
+                
+                # Extraer el access token de la respuesta del Auth-Service
+                access_token = result.get('tokens', {}).get('accessToken')
+                
+                if access_token:
+                    app.state.rest.set_token(access_token)
+                    # Guardar refresh token para renovación futura
+                    app.state.refresh_token = result.get('tokens', {}).get('refreshToken')
+                    print(f"✅ GraphQL Service autenticado con Auth-Service ({login_email})")
+                else:
+                    print("⚠️ Login exitoso pero no se recibió accessToken")
+                    
             except Exception as e:
-                print(f"⚠️ No se pudo autenticar automáticamente: {e}")
-                print("   Configura API_TOKEN en .env o verifica que la API esté corriendo")
+                print(f"⚠️ No se pudo autenticar con Auth-Service: {e}")
+                print("   Configura API_TOKEN en .env o verifica que Auth-Service esté corriendo en", auth_url)
 
     @app.on_event("shutdown")
     async def _shutdown():
         rest = getattr(app.state, "rest", None)
+        auth = getattr(app.state, "auth", None)
         if rest is not None:
             await rest.close()
+        if auth is not None:
+            await auth.close()
 
     # Mount GraphQL router
     graphql_router = GraphQLRouter(schema=schema, context_getter=get_context, graphiql=True)
