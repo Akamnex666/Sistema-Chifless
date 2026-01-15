@@ -16,14 +16,9 @@ concurrency:
   group: ci-graphql-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: ./GraphQL/service
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,18 +28,23 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          # La ruta del cache debe ser relativa a la raíz del repositorio
           cache-dependency-path: GraphQL/service/requirements.txt
 
       - name: Install dependencies
+        # Se define el directorio de trabajo explícitamente en el paso
+        working-directory: ./GraphQL/service
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install ruff pytest-cov
 
       - name: Lint
+        working-directory: ./GraphQL/service
         run: ruff check . --ignore E501 || true
 
       - name: Test
+        working-directory: ./GraphQL/service
         run: pytest tests/ -v --tb=short || true
         env:
           API_URL: http://localhost:3000/chifles
@@ -54,7 +54,6 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
