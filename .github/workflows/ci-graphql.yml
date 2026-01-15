@@ -19,11 +19,6 @@ concurrency:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    # Se define el directorio de trabajo solo para este job
-    defaults:
-      run:
-        working-directory: ./GraphQL/service
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,19 +28,23 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          # Ruta relativa a la raíz del repo para el cache
+          # Buscamos el archivo de requerimientos desde la raíz
           cache-dependency-path: GraphQL/service/requirements.txt
 
       - name: Install dependencies
+        # Especificamos el directorio de trabajo directamente en el comando
+        working-directory: ./GraphQL/service
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install ruff pytest-cov
 
       - name: Lint
+        working-directory: ./GraphQL/service
         run: ruff check . --ignore E501 || true
 
       - name: Test
+        working-directory: ./GraphQL/service
         run: pytest tests/ -v --tb=short || true
         env:
           API_URL: http://localhost:3000/chifles
@@ -55,11 +54,6 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    # Se define el directorio de trabajo también para el job de Docker
-    defaults:
-      run:
-        working-directory: ./GraphQL/service
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -70,8 +64,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          # El contexto debe ser relativo a la raíz si no usas working-directory
-          # o simplemente '.' si ya estás dentro de la carpeta
+          # El contexto de Docker debe ser la carpeta donde está el Dockerfile
           context: ./GraphQL/service
           push: false
           tags: sistema-chifles/graphql:${{ github.sha }}
