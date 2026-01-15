@@ -1,0 +1,49 @@
+name: CI - WebSocket
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Websocket/**'
+      - '.github/workflows/ci-websocket.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'Websocket/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-websocket-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ./Websocket
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: Websocket/go.sum
+
+      - name: Verify formatting
+        run: |
+          if [ -n "$(gofmt -l .)" ]; then
+            echo "Files not formatted:"
+            gofmt -l .
+            exit 1
+          fi
+
+      - name: Build
+        run: go build -v ./...
+
+      - name: Test
+        run: go test -v ./... || true

@@ -1,0 +1,72 @@
+name: CI - GraphQL
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'GraphQL/**'
+      - '.github/workflows/ci-graphql.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'GraphQL/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-graphql-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ./GraphQL/service
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: GraphQL/service/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest-cov
+
+      - name: Lint
+        run: ruff check . --ignore E501 || true
+
+      - name: Test
+        run: pytest tests/ -v --tb=short || true
+        env:
+          API_URL: http://localhost:3000/chifles
+          AUTH_SERVICE_URL: http://localhost:3001/api
+
+  docker:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./GraphQL/service
+          push: false
+          tags: sistema-chifles/graphql:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

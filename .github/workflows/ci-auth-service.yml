@@ -1,0 +1,91 @@
+name: CI - Auth-Service
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'Auth-Service/**'
+      - '.github/workflows/ci-auth-service.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'Auth-Service/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-auth-service-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ./Auth-Service
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: auth_user
+          POSTGRES_PASSWORD: auth_password
+          POSTGRES_DB: auth_db
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: Auth-Service/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test -- --passWithNoTests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5433
+          DB_USERNAME: auth_user
+          DB_PASSWORD: auth_password
+          DB_DATABASE: auth_db
+          JWT_SECRET: test-jwt-secret-for-ci
+
+  docker:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Auth-Service
+          push: false
+          tags: sistema-chifles/auth-service:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
