@@ -1,0 +1,40 @@
+# Binarios
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+websocket-server
+
+# Test
+*.test
+*.out
+coverage.out
+
+# Dependencias (se descargan en build)
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Env local
+.env
+.env.local
+.env.*.local
+
+# Docs
+*.md
+
+# Docker
+Dockerfile*
+docker-compose*
+
+# Postman
+*.json
