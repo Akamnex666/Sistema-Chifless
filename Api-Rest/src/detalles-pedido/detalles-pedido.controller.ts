@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { DetallesPedidoService } from './detalles-pedido.service';
 import { CreateDetalleDto } from './dto/create-detalles-pedido.dto';
@@ -21,7 +30,9 @@ export class DetallesPedidoController {
   }
 
   @Get('pedido/:pedidoId')
-  findByPedido(@Param('pedidoId', ParseIntPipe) pedidoId: number): Promise<DetallePedido[]> {
+  findByPedido(
+    @Param('pedidoId', ParseIntPipe) pedidoId: number,
+  ): Promise<DetallePedido[]> {
     return this.detallesPedidoService.findByPedido(pedidoId);
   }
 

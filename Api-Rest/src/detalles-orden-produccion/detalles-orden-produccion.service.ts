@@ -24,21 +24,35 @@ export class DetallesOrdenProduccionService {
       relations: ['ordenProduccion', 'insumo'],
     });
     if (!detalle) {
-      throw new NotFoundException(`Detalle de orden de producción con ID ${id} no encontrado`);
+      throw new NotFoundException(
+        `Detalle de orden de producción con ID ${id} no encontrado`,
+      );
     }
     return detalle;
   }
 
-  async create(createDetalleOrdenProduccionDto: CreateDetalleOrdenProduccionDto): Promise<DetalleOrdenProduccion> {
-    const detalle = this.detalleOrdenProduccionRepository.create(createDetalleOrdenProduccionDto);
+  async create(
+    createDetalleOrdenProduccionDto: CreateDetalleOrdenProduccionDto,
+  ): Promise<DetalleOrdenProduccion> {
+    const detalle = this.detalleOrdenProduccionRepository.create(
+      createDetalleOrdenProduccionDto,
+    );
     return await this.detalleOrdenProduccionRepository.save(detalle);
   }
 
-  async update(id: number, updateDetalleOrdenProduccionDto: UpdateDetalleOrdenProduccionDto): Promise<DetalleOrdenProduccion> {
-    await this.detalleOrdenProduccionRepository.update(id, updateDetalleOrdenProduccionDto);
+  async update(
+    id: number,
+    updateDetalleOrdenProduccionDto: UpdateDetalleOrdenProduccionDto,
+  ): Promise<DetalleOrdenProduccion> {
+    await this.detalleOrdenProduccionRepository.update(
+      id,
+      updateDetalleOrdenProduccionDto,
+    );
     const updatedDetalle = await this.findOne(id);
     if (!updatedDetalle) {
-      throw new NotFoundException(`Detalle de orden de producción con ID ${id} no encontrado`);
+      throw new NotFoundException(
+        `Detalle de orden de producción con ID ${id} no encontrado`,
+      );
     }
     return updatedDetalle;
   }
@@ -46,11 +60,15 @@ export class DetallesOrdenProduccionService {
   async remove(id: number): Promise<void> {
     const result = await this.detalleOrdenProduccionRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Detalle de orden de producción con ID ${id} no encontrado`);
+      throw new NotFoundException(
+        `Detalle de orden de producción con ID ${id} no encontrado`,
+      );
     }
   }
 
-  async findByOrdenProduccion(ordenProduccionId: number): Promise<DetalleOrdenProduccion[]> {
+  async findByOrdenProduccion(
+    ordenProduccionId: number,
+  ): Promise<DetalleOrdenProduccion[]> {
     return this.detalleOrdenProduccionRepository.find({
       where: { ordenProduccionId },
       relations: ['insumo'],

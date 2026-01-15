@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { OrdenProduccion } from '../../ordenes-produccion/entities/ordenes-produccion.entity';
 import { Insumo } from '../../insumos/entities/insumo.entity';
 
@@ -17,11 +23,11 @@ export class DetalleOrdenProduccion {
   cantidad_utilizada: number;
 
   // Relaciones
-  @ManyToOne(() => OrdenProduccion, orden => orden.detalles)
+  @ManyToOne(() => OrdenProduccion, (orden) => orden.detalles)
   @JoinColumn({ name: 'ordenProduccionId' })
   ordenProduccion: OrdenProduccion;
 
-  @ManyToOne(() => Insumo, insumo => insumo.detallesOrdenProduccion)
+  @ManyToOne(() => Insumo, (insumo) => insumo.detallesOrdenProduccion)
   @JoinColumn({ name: 'insumoId' })
   insumo: Insumo;
 }

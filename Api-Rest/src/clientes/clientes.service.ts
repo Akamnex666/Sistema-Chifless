@@ -29,10 +29,14 @@ export class ClientesService {
   }
 
   async update(id: number, data: UpdateClienteDto) {
-    this.logger.log(`ClientesService.update id=${id} payload=${JSON.stringify(data)}`);
+    this.logger.log(
+      `ClientesService.update id=${id} payload=${JSON.stringify(data)}`,
+    );
     await this.clienteRepository.update(id, data);
     const result = await this.findOne(id);
-    this.logger.log(`ClientesService.update result id=${result?.id} data=${JSON.stringify(result)}`);
+    this.logger.log(
+      `ClientesService.update result id=${result?.id} data=${JSON.stringify(result)}`,
+    );
     return result;
   }
 

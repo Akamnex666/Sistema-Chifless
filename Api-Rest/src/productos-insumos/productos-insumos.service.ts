@@ -29,21 +29,32 @@ export class ProductosInsumosService {
       relations: ['producto', 'insumo'],
     });
     if (!productoInsumo) {
-      throw new NotFoundException(`Relación Producto-Insumo con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Relación Producto-Insumo con ID ${id} no encontrada`,
+      );
     }
     return productoInsumo;
   }
 
-  async create(createProductoInsumoDto: CreateProductoInsumoDto): Promise<ProductoInsumo> {
-    const productoInsumo = this.productoInsumoRepository.create(createProductoInsumoDto);
+  async create(
+    createProductoInsumoDto: CreateProductoInsumoDto,
+  ): Promise<ProductoInsumo> {
+    const productoInsumo = this.productoInsumoRepository.create(
+      createProductoInsumoDto,
+    );
     return await this.productoInsumoRepository.save(productoInsumo);
   }
 
-  async update(id: number, updateProductoInsumoDto: UpdateProductoInsumoDto): Promise<ProductoInsumo> {
+  async update(
+    id: number,
+    updateProductoInsumoDto: UpdateProductoInsumoDto,
+  ): Promise<ProductoInsumo> {
     await this.productoInsumoRepository.update(id, updateProductoInsumoDto);
     const updatedProductoInsumo = await this.findOne(id);
     if (!updatedProductoInsumo) {
-      throw new NotFoundException(`Relación Producto-Insumo con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Relación Producto-Insumo con ID ${id} no encontrada`,
+      );
     }
     return updatedProductoInsumo;
   }
@@ -51,7 +62,9 @@ export class ProductosInsumosService {
   async remove(id: number): Promise<void> {
     const result = await this.productoInsumoRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Relación Producto-Insumo con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Relación Producto-Insumo con ID ${id} no encontrada`,
+      );
     }
   }
 

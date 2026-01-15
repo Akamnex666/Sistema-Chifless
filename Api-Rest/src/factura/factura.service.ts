@@ -34,7 +34,10 @@ export class FacturasService {
     return await this.facturaRepository.save(factura);
   }
 
-  async update(id: number, updateFacturaDto: UpdateFacturaDto): Promise<Factura> {
+  async update(
+    id: number,
+    updateFacturaDto: UpdateFacturaDto,
+  ): Promise<Factura> {
     await this.facturaRepository.update(id, updateFacturaDto);
     const updatedFactura = await this.findOne(id);
     if (!updatedFactura) {

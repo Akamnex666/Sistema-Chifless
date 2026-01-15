@@ -40,8 +40,8 @@ export class ClientesController {
   async create(@Body() body: CreateClienteDto) {
     const nuevoCliente = await this.clientesService.create(body);
 
-    await notifyWebSocket("client.created", nuevoCliente);
-    
+    await notifyWebSocket('client.created', nuevoCliente);
+
     return nuevoCliente;
   }
 
@@ -67,7 +67,9 @@ export class ClientesController {
     @Headers('authorization') authorization?: string,
   ) {
     // Delegar a la misma lógica de update para aceptar PATCH desde clientes externos
-    this.logger.log(`PATCH /clientes/${id} - payload: ${JSON.stringify(body)} - auth:${authorization}`);
+    this.logger.log(
+      `PATCH /clientes/${id} - payload: ${JSON.stringify(body)} - auth:${authorization}`,
+    );
 
     const actualizado = await this.clientesService.update(id, body);
 
@@ -82,7 +84,7 @@ export class ClientesController {
   async remove(@Param('id', ParseIntPipe) id: number) {
     await this.clientesService.remove(id);
 
-    await notifyWebSocket("client.deleted", { id });
+    await notifyWebSocket('client.deleted', { id });
 
     return { deleted: true };
   }

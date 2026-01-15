@@ -1,10 +1,15 @@
 import { Controller, Get, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public } from './public.decorator';
 
 /**
  * Controlador para probar la autenticación.
- * 
+ *
  * Todos los endpoints están protegidos por el JwtAuthGuard global,
  * excepto los marcados con @Public().
  */
@@ -14,8 +19,8 @@ export class ProtectedController {
   @Get('test')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Endpoint de prueba (protegido)' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Retorna mensaje de éxito y datos del usuario',
     schema: {
       example: {
@@ -29,12 +34,15 @@ export class ProtectedController {
     },
   })
   @ApiResponse({ status: 401, description: 'No autorizado' })
-  testAuth(@Req() req: any) {
-    return { 
-      message: 'Autenticación exitosa', 
+  testAuth(
+    @Req() req: Request & { user: import('./jwt-auth.service').JwtPayload },
+  ) {
+    const user = req.user;
+    return {
+      message: 'Autenticación exitosa',
       user: {
-        id: req.user.sub,
-        email: req.user.email,
+        id: user.sub,
+        email: user.email,
       },
       timestamp: new Date().toISOString(),
     };
@@ -43,7 +51,10 @@ export class ProtectedController {
   @Get('health')
   @Public()
   @ApiOperation({ summary: 'Health check del módulo de auth (público)' })
-  @ApiResponse({ status: 200, description: 'El módulo de auth está funcionando' })
+  @ApiResponse({
+    status: 200,
+    description: 'El módulo de auth está funcionando',
+  })
   health() {
     return {
       status: 'ok',

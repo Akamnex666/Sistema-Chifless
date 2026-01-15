@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { PedidosService } from './pedidos.service';
 import { CreatePedidoDto } from './dto/create-pedido.dto';
@@ -28,7 +37,10 @@ export class PedidosController {
   }
 
   @Put(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdatePedidoDto) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePedidoDto,
+  ) {
     const actualizado = await this.pedidosService.update(id, dto);
 
     // Detectar estado y notificar acorde
