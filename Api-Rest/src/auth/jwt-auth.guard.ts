@@ -1,14 +1,19 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtAuthService, JwtPayload } from './jwt-auth.service';
 import { IS_PUBLIC_KEY } from './public.decorator';
 
 /**
  * Guard global de autenticación JWT.
- * 
+ *
  * Valida que todas las rutas tengan un token JWT válido en el header Authorization,
  * excepto las marcadas con el decorador @Public().
- * 
+ *
  * Los tokens son generados por el Auth-Service y validados aquí usando
  * el mismo JWT_SECRET compartido.
  */
@@ -27,12 +32,15 @@ export class JwtAuthGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    const req = context.switchToHttp().getRequest();
+    const req = context.switchToHttp().getRequest<{
+      headers: Record<string, string | string[] | undefined>;
+      user?: JwtPayload;
+    }>();
     const token = this.extractTokenFromHeader(req);
 
     if (!token) {
       throw new UnauthorizedException(
-        'Token de autenticación requerido. Use: Authorization: Bearer <token>'
+        'Token de autenticación requerido. Use: Authorization: Bearer <token>',
       );
     }
 
@@ -41,12 +49,12 @@ export class JwtAuthGuard implements CanActivate {
     // Validar que sea un access token (no un refresh token)
     if (payload.type && payload.type !== 'access') {
       throw new UnauthorizedException(
-        'Se requiere un access token. Los refresh tokens no son válidos para esta operación.'
+        'Se requiere un access token. Los refresh tokens no son válidos para esta operación.',
       );
     }
 
     // Adjuntar el usuario al request para uso posterior
-    req.user = payload;
+    (req as { user?: JwtPayload }).user = payload;
     return true;
   }
 
@@ -54,15 +62,20 @@ export class JwtAuthGuard implements CanActivate {
    * Extrae el token JWT del header Authorization.
    * Soporta múltiples formatos: "Bearer token", "bearer token", "token"
    */
-  private extractTokenFromHeader(request: any): string | null {
-    const authHeader = request.headers['authorization'] || request.headers['Authorization'];
-    
+  private extractTokenFromHeader(request: {
+    headers: Record<string, string | string[] | undefined>;
+  }): string | null {
+    const authHeader =
+      request.headers['authorization'] ?? request.headers['Authorization'];
+
     if (!authHeader) {
       return null;
     }
 
     // Normalizar a string (en caso de que el framework envíe un array)
-    const header = Array.isArray(authHeader) ? authHeader[0] : String(authHeader);
+    const header = Array.isArray(authHeader)
+      ? (authHeader[0] ?? '')
+      : String(authHeader);
     let token = header.trim();
 
     // Remover prefijos "Bearer " (case-insensitive)

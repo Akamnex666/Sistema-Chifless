@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { InsumosService } from './insumos.service';
 import { CreateInsumoDto } from './dto/create-insumo.dto';
@@ -23,20 +32,23 @@ export class InsumosController {
 
   @Post()
   async create(@Body() createInsumoDto: CreateInsumoDto): Promise<Insumo> {
-    const nuevo= await this.insumosService.create(createInsumoDto);
+    const nuevo = await this.insumosService.create(createInsumoDto);
     await notifyWebSocket('supply.restocked', nuevo);
     return nuevo;
   }
 
   @Put(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateInsumoDto) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateInsumoDto,
+  ) {
     const actualizado = await this.insumosService.update(id, dto);
     await notifyWebSocket('supply.updated', actualizado);
 
     const STOCK_MINIMO_DEFAULT = 10; // valor arbitrario
     if (actualizado.stock < STOCK_MINIMO_DEFAULT) {
       await notifyWebSocket('supply.low', actualizado);
-    } 
+    }
     return actualizado;
   }
 

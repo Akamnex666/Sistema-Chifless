@@ -29,7 +29,10 @@ export class ProductosService {
     return await this.productoRepository.save(producto);
   }
 
-  async update(id: number, updateProductoDto: UpdateProductoDto): Promise<Producto> {
+  async update(
+    id: number,
+    updateProductoDto: UpdateProductoDto,
+  ): Promise<Producto> {
     await this.productoRepository.update(id, updateProductoDto);
     const updatedProducto = await this.findOne(id);
     if (!updatedProducto) {
@@ -50,7 +53,7 @@ export class ProductosService {
     if (!producto) {
       throw new Error(`Producto con ID ${id} no encontrado`);
     }
-  
+
     // Cambiar estado
     producto.estado = producto.estado === 'activo' ? 'inactivo' : 'activo';
     await this.productoRepository.save(producto);

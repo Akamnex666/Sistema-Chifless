@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ProductosInsumosService } from './productos-insumos.service';
 import { CreateProductoInsumoDto } from './dto/create-productos-insumo.dto';
@@ -9,7 +18,9 @@ import { notifyWebSocket } from '../utils/notify-ws';
 @ApiBearerAuth()
 @Controller('productos-insumos')
 export class ProductosInsumosController {
-  constructor(private readonly productosInsumosService: ProductosInsumosService) {}
+  constructor(
+    private readonly productosInsumosService: ProductosInsumosService,
+  ) {}
 
   @Get()
   findAll(): Promise<ProductoInsumo[]> {
@@ -22,18 +33,26 @@ export class ProductosInsumosController {
   }
 
   @Get('producto/:productoId')
-  findByProducto(@Param('productoId', ParseIntPipe) productoId: number): Promise<ProductoInsumo[]> {
+  findByProducto(
+    @Param('productoId', ParseIntPipe) productoId: number,
+  ): Promise<ProductoInsumo[]> {
     return this.productosInsumosService.findByProducto(productoId);
   }
 
   @Get('insumo/:insumoId')
-  findByInsumo(@Param('insumoId', ParseIntPipe) insumoId: number): Promise<ProductoInsumo[]> {
+  findByInsumo(
+    @Param('insumoId', ParseIntPipe) insumoId: number,
+  ): Promise<ProductoInsumo[]> {
     return this.productosInsumosService.findByInsumo(insumoId);
   }
 
   @Post()
-  async create(@Body() createProductoInsumoDto: CreateProductoInsumoDto): Promise<ProductoInsumo> {
-    const nuevo = await this.productosInsumosService.create(createProductoInsumoDto);
+  async create(
+    @Body() createProductoInsumoDto: CreateProductoInsumoDto,
+  ): Promise<ProductoInsumo> {
+    const nuevo = await this.productosInsumosService.create(
+      createProductoInsumoDto,
+    );
     await notifyWebSocket('recipe.created', nuevo);
     return nuevo;
   }
@@ -43,7 +62,10 @@ export class ProductosInsumosController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProductoInsumoDto: UpdateProductoInsumoDto,
   ): Promise<ProductoInsumo> {
-    const actualizado = await this.productosInsumosService.update(id, updateProductoInsumoDto);
+    const actualizado = await this.productosInsumosService.update(
+      id,
+      updateProductoInsumoDto,
+    );
     await notifyWebSocket('recipe.updated', actualizado);
     return actualizado;
   }

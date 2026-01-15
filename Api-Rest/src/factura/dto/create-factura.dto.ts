@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsNumber, IsPositive, IsString, IsOptional } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsPositive,
+  IsString,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateFacturaDto {
   @IsNotEmpty()

@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { OrdenesProduccionService } from './ordenes-produccion.service';
 import { CreateOrdenProduccionDto } from './dto/create-ordenes-produccion.dto';
@@ -9,7 +18,9 @@ import { notifyWebSocket } from '../utils/notify-ws';
 @ApiBearerAuth()
 @Controller('ordenes-produccion')
 export class OrdenesProduccionController {
-  constructor(private readonly ordenesProduccionService: OrdenesProduccionService) {}
+  constructor(
+    private readonly ordenesProduccionService: OrdenesProduccionService,
+  ) {}
 
   @Get()
   findAll(): Promise<OrdenProduccion[]> {
@@ -29,7 +40,10 @@ export class OrdenesProduccionController {
   }
 
   @Put(':id')
-  async update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateOrdenProduccionDto) {
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateOrdenProduccionDto,
+  ) {
     const actualizada = await this.ordenesProduccionService.update(id, dto);
 
     switch (actualizada.estado) {

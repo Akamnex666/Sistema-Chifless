@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
@@ -22,19 +31,23 @@ export class ProductosController {
   }
 
   @Post()
-  async create(@Body() createProductoDto: CreateProductoDto): Promise<Producto> {
+  async create(
+    @Body() createProductoDto: CreateProductoDto,
+  ): Promise<Producto> {
     const nuevoProducto = await this.productosService.create(createProductoDto);
     await notifyWebSocket('product.created', nuevoProducto);
-      return nuevoProducto;
+    return nuevoProducto;
   }
-  
 
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateProductoDto: UpdateProductoDto,
   ): Promise<Producto> {
-    const productoActualizado = await this.productosService.update(id, updateProductoDto);
+    const productoActualizado = await this.productosService.update(
+      id,
+      updateProductoDto,
+    );
     await notifyWebSocket('product.updated', productoActualizado);
     return productoActualizado;
   }
@@ -48,7 +61,8 @@ export class ProductosController {
   @Put(':id/estado')
   async toggleStatus(@Param('id', ParseIntPipe) id: number): Promise<void> {
     const producto = await this.productosService.toggleStatus(id);
-    const type = producto.estado === 'activo' ? 'product.enabled' : 'product.disabled';
+    const type =
+      producto.estado === 'activo' ? 'product.enabled' : 'product.disabled';
     await notifyWebSocket(type, producto);
-}
+  }
 }

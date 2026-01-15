@@ -1,22 +1,22 @@
-import fetch from "node-fetch";
-
 const WS_URL = process.env.WS_URL;
 const WS_SECRET = process.env.WS_SECRET;
 
-
 //Envía un evento al servidor WebSocket (Go)
-export async function notifyWebSocket(type: string, payload: any) {
+export async function notifyWebSocket(
+  type: string,
+  payload: unknown,
+): Promise<void> {
   if (!WS_URL || !WS_SECRET) {
-    console.warn("WebSocket no configurado ");
+    console.warn('WebSocket no configurado ');
     return;
   }
 
   try {
-    const response = await fetch(WS_URL, {
-      method: "POST",
+    const response = await globalThis.fetch(WS_URL, {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        "X-WS-SECRET": WS_SECRET,
+        'Content-Type': 'application/json',
+        'X-WS-SECRET': WS_SECRET,
       },
       body: JSON.stringify({ type, payload }),
     });
@@ -26,7 +26,7 @@ export async function notifyWebSocket(type: string, payload: any) {
     } else {
       console.log(`Evento WebSocket enviado: ${type}`);
     }
-  } catch (err) {
-    console.error("No se pudo conectar al servidor WebSocket:", err);
+  } catch (err: unknown) {
+    console.error('No se pudo conectar al servidor WebSocket:', err);
   }
 }

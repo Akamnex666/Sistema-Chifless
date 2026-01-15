@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
 import { Producto } from '../../productos/entities/producto.entity';
 import { DetalleOrdenProduccion } from '../../detalles-orden-produccion/entities/detalles-orden-produccion.entity';
 
@@ -23,10 +30,10 @@ export class OrdenProduccion {
   cantidad_producir: number;
 
   // Relaciones
-  @ManyToOne(() => Producto, producto => producto.ordenesProduccion)
+  @ManyToOne(() => Producto, (producto) => producto.ordenesProduccion)
   @JoinColumn({ name: 'productoId' })
   producto: Producto;
 
-  @OneToMany(() => DetalleOrdenProduccion, detalle => detalle.ordenProduccion)
+  @OneToMany(() => DetalleOrdenProduccion, (detalle) => detalle.ordenProduccion)
   detalles: DetalleOrdenProduccion[];
 }

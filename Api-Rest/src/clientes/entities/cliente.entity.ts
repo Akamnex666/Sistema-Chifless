@@ -22,9 +22,9 @@ export class Cliente {
   @Column({ unique: true })
   email: string;
 
-  @OneToMany(() => Pedido, pedido => pedido.cliente)
+  @OneToMany(() => Pedido, (pedido) => pedido.cliente)
   pedidos: Pedido[];
 
-  @OneToMany(() => Factura, factura => factura.cliente)
+  @OneToMany(() => Factura, (factura) => factura.cliente)
   facturas: Factura[];
 }

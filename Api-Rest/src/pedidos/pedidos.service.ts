@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { Pedido } from './entities/pedido.entity';
@@ -9,7 +13,8 @@ import { CreatePedidoDto } from './dto/create-pedido.dto';
 export class PedidosService {
   constructor(
     @InjectRepository(Pedido) private readonly pedidoRepo: Repository<Pedido>,
-    @InjectRepository(DetallePedido) private readonly detalleRepo: Repository<DetallePedido>,
+    @InjectRepository(DetallePedido)
+    private readonly detalleRepo: Repository<DetallePedido>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -18,16 +23,23 @@ export class PedidosService {
     // Validaciones adicionales (ej: que cliente exista) aquí si las necesitas
 
     // Calcular subtotales y total por servidor (recomendado)
-    dto.detalles = dto.detalles.map(d => ({
+    dto.detalles = dto.detalles.map((d) => ({
       ...d,
-      subtotal: Number((d.cantidad_solicitada * Number(d.precio_unitario)).toFixed(2)),
+      subtotal: Number(
+        (d.cantidad_solicitada * Number(d.precio_unitario)).toFixed(2),
+      ),
     }));
 
     // Recalcular total en servidor y comparar con dto.total si quieres
-    const totalComputed = dto.detalles.reduce((s, d) => s + Number(d.subtotal), 0);
+    const totalComputed = dto.detalles.reduce(
+      (s, d) => s + Number(d.subtotal),
+      0,
+    );
     if (Math.abs(totalComputed - Number(dto.total)) > 0.01) {
       // Puedes decidir: ajustar total o lanzar error
-      throw new BadRequestException('Total no coincide con la suma de subtotales');
+      throw new BadRequestException(
+        'Total no coincide con la suma de subtotales',
+      );
     }
 
     const queryRunner = this.dataSource.createQueryRunner();
@@ -80,7 +92,7 @@ export class PedidosService {
         // borrar detalles previos
         await queryRunner.manager.delete(DetallePedido, { pedidoId: id });
         // crear nuevos
-        const nuevos = dto.detalles.map(d => ({ ...d, pedidoId: id }));
+        const nuevos = dto.detalles.map((d) => ({ ...d, pedidoId: id }));
         await queryRunner.manager.insert(DetallePedido, nuevos);
       }
 

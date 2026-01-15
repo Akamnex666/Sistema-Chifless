@@ -3,7 +3,7 @@ import { JwtPayload } from './jwt-auth.service';
 
 /**
  * Decorador para obtener el usuario autenticado desde el request.
- * 
+ *
  * Uso:
  * ```typescript
  * @Get('profile')
@@ -11,7 +11,7 @@ import { JwtPayload } from './jwt-auth.service';
  *   return { userId: user.sub, email: user.email };
  * }
  * ```
- * 
+ *
  * También se puede obtener una propiedad específica:
  * ```typescript
  * @Get('profile')
@@ -22,8 +22,8 @@ import { JwtPayload } from './jwt-auth.service';
  */
 export const CurrentUser = createParamDecorator(
   (data: keyof JwtPayload | undefined, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
-    const user = request.user as JwtPayload;
+    const request = ctx.switchToHttp().getRequest<{ user?: JwtPayload }>();
+    const user = request.user;
 
     if (!user) {
       return null;

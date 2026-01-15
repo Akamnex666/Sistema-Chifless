@@ -12,16 +12,20 @@ import {
   Factory,
   FileText,
   BarChart3,
+  MessageSquare,
+  CreditCard,
 } from 'lucide-react';
 
 const menuItems = [
   { icon: Home, label: 'Dashboard', href: '/' },
+  { icon: MessageSquare, label: 'Chat IA', href: '/chat' },
   { icon: Users, label: 'Clientes', href: '/clientes' },
   { icon: Package, label: 'Productos', href: '/productos' },
   { icon: Layers, label: 'Insumos', href: '/insumos' },
   { icon: ShoppingCart, label: 'Pedidos', href: '/pedidos' },
   { icon: Factory, label: 'Órdenes de Producción', href: '/ordenes-produccion' },
   { icon: FileText, label: 'Facturas', href: '/facturas' },
+  { icon: CreditCard, label: 'Pagos', href: '/pagos' },
   { icon: BarChart3, label: 'Reportes', href: '/reportes' },
 ];
 
