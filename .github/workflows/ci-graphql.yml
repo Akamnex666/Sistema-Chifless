@@ -28,23 +28,23 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-          # Buscamos el archivo de requerimientos desde la raíz
-          cache-dependency-path: GraphQL/requirements.txt
+          # La ruta del cache debe ser relativa a la raíz del repositorio
+          cache-dependency-path: GraphQL/service/requirements.txt
 
       - name: Install dependencies
-        # Especificamos el directorio de trabajo directamente en el comando
-        working-directory: ./GraphQL
+        # Se define el directorio de trabajo explícitamente en el paso
+        working-directory: ./GraphQL/service
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install ruff pytest-cov
 
       - name: Lint
-        working-directory: ./GraphQL
+        working-directory: ./GraphQL/service
         run: ruff check . --ignore E501 || true
 
       - name: Test
-        working-directory: ./GraphQL
+        working-directory: ./GraphQL/service
         run: pytest tests/ -v --tb=short || true
         env:
           API_URL: http://localhost:3000/chifles
@@ -64,8 +64,7 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
-          # El contexto de Docker debe ser la carpeta donde está el Dockerfile
-          context: ./GraphQL
+          context: ./GraphQL/service
           push: false
           tags: sistema-chifles/graphql:${{ github.sha }}
           cache-from: type=gha
