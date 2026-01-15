@@ -130,7 +130,11 @@ export type WebSocketEventType =
   // Facturas
   | 'invoice.created'
   | 'invoice.paid'
-  | 'invoice.deleted';
+  | 'invoice.deleted'
+  // AI Orchestrator
+  | 'order.created.ai'
+  | 'ai.tool.executed'
+  | 'ai.analysis.completed';
 
 export interface WebSocketEvent {
   type: WebSocketEventType;
