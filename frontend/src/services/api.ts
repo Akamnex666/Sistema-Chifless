@@ -7,6 +7,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // 10 segundos de timeout
 });
 
 // Interceptor para añadir Authorization desde localStorage
@@ -32,22 +33,26 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    try {
-      const status = error.response?.status;
-      console.error('API Error:', error.response?.data || error.message);
-      if (typeof window !== 'undefined' && status === 401) {
-        // Token inválido o expirado: limpiar y forzar login
-        try {
-          localStorage.removeItem('access_token');
-        } catch (e) {
-          console.warn('Error clearing access_token', e);
-        }
-        // Reemplazamos la ubicación para evitar que el historial permita volver a una ruta protegida
-        window.location.replace('/login');
-      }
-    } catch (e) {
-      console.error('Error in response interceptor', e);
+    // Si no hay respuesta (error de red/conexión), no redirigir
+    if (!error.response) {
+      console.error('Network Error:', error.message);
+      return Promise.reject(error);
     }
+    
+    const status = error.response?.status;
+    console.error('API Error:', status, error.response?.data || error.message);
+    
+    // NO redirigir automáticamente - dejar que los componentes manejen los errores
+    // Solo limpiar tokens si es 401 para que el AuthContext detecte el cambio
+    if (typeof window !== 'undefined' && status === 401) {
+      try {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+      } catch (e) {
+        console.warn('Error clearing tokens', e);
+      }
+    }
+    
     return Promise.reject(error);
   }
 );
