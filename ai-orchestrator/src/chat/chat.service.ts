@@ -6,6 +6,7 @@ import { getToolsForGemini } from '../mcp/tools/tool-definitions';
 import { ChatDto, ChatResponseDto } from './dto/chat.dto';
 import { ChatMessage } from '../llm/interfaces/llm-provider.interface';
 import { InteractionLog } from './interfaces/interaction-log.interface';
+import { ProviderType, ModelsResponse } from '../llm/interfaces/model-config.interface';
 
 @Injectable()
 export class ChatService {
@@ -158,6 +159,8 @@ export class ChatService {
         toolsUsed: toolsUsed.length > 0 ? toolsUsed : undefined,
         sessionId,
         timestamp: new Date().toISOString(),
+        model: this.llmService.getCurrentModel(),
+        provider: this.llmService.getCurrentProvider(),
       };
     } catch (error) {
       this.logger.error('Error procesando mensaje:', error);
@@ -206,10 +209,32 @@ export class ChatService {
   /**
    * Obtiene información del proveedor actual
    */
-  getProviderInfo(): { current: string; available: string[] } {
+  getProviderInfo(): { current: string; currentModel: string; available: string[] } {
     return {
       current: this.llmService.getCurrentProvider(),
+      currentModel: this.llmService.getCurrentModel(),
       available: this.llmService.getAvailableProviders(),
     };
+  }
+
+  /**
+   * Obtiene información completa de modelos
+   */
+  getModelsInfo(): ModelsResponse {
+    return this.llmService.getModelsInfo();
+  }
+
+  /**
+   * Cambia el proveedor de LLM
+   */
+  setProvider(provider: ProviderType): { success: boolean; message: string } {
+    return this.llmService.setProvider(provider);
+  }
+
+  /**
+   * Cambia el modelo de LLM
+   */
+  setModel(model: string): { success: boolean; message: string } {
+    return this.llmService.setModel(model);
   }
 }

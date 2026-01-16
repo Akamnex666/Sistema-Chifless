@@ -4,7 +4,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { 
   sendChatMessage, 
   fileToBase64,
+  getModelsInfo,
+  setModel,
   ChatMessage,
+  ModelsResponse,
+  ModelInfo,
 } from '@/services/aiApi';
 
 // Iconos simples como componentes
@@ -38,6 +42,18 @@ const CloseIcon = () => (
   </svg>
 );
 
+const ChevronDownIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+  </svg>
+);
+
+const CpuIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z" />
+  </svg>
+);
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
@@ -47,8 +63,86 @@ export default function ChatPage() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   
+  // Estado para modelos
+  const [modelsData, setModelsData] = useState<ModelsResponse | null>(null);
+  const [currentModel, setCurrentModel] = useState<string>('');
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
+  const [isChangingModel, setIsChangingModel] = useState(false);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modelDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Cargar modelos al iniciar
+  useEffect(() => {
+    loadModels();
+  }, []);
+
+  // Cerrar dropdown al hacer click afuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (modelDropdownRef.current && !modelDropdownRef.current.contains(event.target as Node)) {
+        setIsModelDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const loadModels = async () => {
+    try {
+      const data = await getModelsInfo();
+      setModelsData(data);
+      setCurrentModel(data.currentModel);
+    } catch (err) {
+      console.error('Error loading models:', err);
+    }
+  };
+
+  const handleModelChange = async (modelId: string) => {
+    if (modelId === currentModel || isChangingModel) return;
+    
+    setIsChangingModel(true);
+    try {
+      await setModel(modelId);
+      setCurrentModel(modelId);
+      setIsModelDropdownOpen(false);
+      // Recargar información de modelos
+      await loadModels();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Error al cambiar el modelo');
+    } finally {
+      setIsChangingModel(false);
+    }
+  };
+
+  const getModelDisplayName = (): string => {
+    if (!modelsData) return 'Cargando...';
+    const model = modelsData.models.find(m => m.id === currentModel);
+    return model ? model.name : currentModel;
+  };
+
+  const getProviderDisplayName = (): string => {
+    if (!modelsData) return '';
+    const model = modelsData.models.find(m => m.id === currentModel);
+    if (!model) return modelsData.currentProvider;
+    switch (model.provider) {
+      case 'gemini': return 'Google Gemini';
+      case 'grok': return 'xAI Grok';
+      case 'openai': return 'OpenAI';
+      case 'groq': return 'Groq';
+      default: return model.provider;
+    }
+  };
+
+  const getAvailableModels = (): ModelInfo[] => {
+    if (!modelsData) return [];
+    // Filtrar solo modelos de proveedores configurados
+    const availableProviders = modelsData.providers
+      .filter(p => p.available)
+      .map(p => p.provider);
+    return modelsData.models.filter(m => availableProviders.includes(m.provider));
+  };
 
   // Auto-scroll al último mensaje
   useEffect(() => {
@@ -143,9 +237,69 @@ export default function ChatPage() {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-gray-900">Asistente Chifles IA</h1>
-              <p className="text-sm text-gray-500">
-                Powered by Gemini
-              </p>
+              {/* Selector de Modelo */}
+              <div className="relative" ref={modelDropdownRef}>
+                <button
+                  onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+                  disabled={isChangingModel}
+                  className="flex items-center gap-1 text-sm text-gray-500 hover:text-amber-600 transition-colors"
+                >
+                  <CpuIcon />
+                  <span>{isChangingModel ? 'Cambiando...' : getModelDisplayName()}</span>
+                  <ChevronDownIcon />
+                </button>
+                
+                {/* Dropdown de modelos */}
+                {isModelDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-72 bg-white rounded-lg shadow-lg border border-gray-200 z-50 overflow-hidden">
+                    <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Seleccionar Modelo</p>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {getAvailableModels().map((model) => (
+                        <button
+                          key={model.id}
+                          onClick={() => handleModelChange(model.id)}
+                          className={`w-full px-3 py-2 text-left hover:bg-amber-50 transition-colors ${
+                            currentModel === model.id ? 'bg-amber-100' : ''
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{model.name}</p>
+                              <p className="text-xs text-gray-500">{model.description}</p>
+                            </div>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              model.provider === 'gemini' 
+                                ? 'bg-blue-100 text-blue-700' 
+                                : model.provider === 'openai'
+                                ? 'bg-green-100 text-green-700'
+                                : model.provider === 'groq'
+                                ? 'bg-orange-100 text-orange-700'
+                                : 'bg-purple-100 text-purple-700'
+                            }`}>
+                              {model.provider === 'gemini' ? 'Gemini' : model.provider === 'openai' ? 'OpenAI' : model.provider === 'groq' ? 'Groq' : 'Grok'}
+                            </span>
+                          </div>
+                          {currentModel === model.id && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                              <span className="text-xs text-green-600">Activo</span>
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {modelsData && modelsData.providers.some(p => !p.available) && (
+                      <div className="px-3 py-2 bg-gray-50 border-t border-gray-200">
+                        <p className="text-xs text-gray-400">
+                          💡 Configura más proveedores en .env para más opciones
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
           

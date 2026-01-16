@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsOptional, IsArray, ValidateNested, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ChatMessageDto {
@@ -31,6 +31,10 @@ export class ChatDto {
   @IsOptional()
   @IsString()
   sessionId?: string;
+
+  @IsOptional()
+  @IsString()
+  model?: string; // Modelo específico para esta petición (opcional)
 }
 
 export class ChatResponseDto {
@@ -38,9 +42,17 @@ export class ChatResponseDto {
   toolsUsed?: string[];
   sessionId: string;
   timestamp: string;
+  model?: string; // Modelo usado para la respuesta
+  provider?: string; // Proveedor usado
 }
 
-export class ProviderDto {
+export class SetProviderDto {
   @IsString()
-  provider: 'gemini' | 'openai';
+  @IsIn(['gemini', 'grok', 'openai', 'groq'])
+  provider: 'gemini' | 'grok' | 'openai' | 'groq';
+}
+
+export class SetModelDto {
+  @IsString()
+  model: string;
 }

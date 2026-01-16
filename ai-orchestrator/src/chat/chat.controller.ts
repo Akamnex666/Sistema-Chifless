@@ -8,11 +8,13 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  Put,
 } from '@nestjs/common';
 import { ChatService } from './chat.service';
-import { ChatDto, ChatResponseDto } from './dto/chat.dto';
+import { ChatDto, ChatResponseDto, SetProviderDto, SetModelDto } from './dto/chat.dto';
 import { ChatMessage } from '../llm/interfaces/llm-provider.interface';
 import { InteractionLog } from './interfaces/interaction-log.interface';
+import type { ModelsResponse } from '../llm/interfaces/model-config.interface';
 
 @Controller('chat')
 export class ChatController {
@@ -76,15 +78,47 @@ export class ChatController {
   }
 
   /**
+   * Cambia el proveedor de LLM
+   * PUT /chat/provider
+   */
+  @Put('provider')
+  setProvider(@Body() dto: SetProviderDto) {
+    this.logger.log(`Cambiando proveedor a: ${dto.provider}`);
+    return this.chatService.setProvider(dto.provider);
+  }
+
+  /**
+   * Obtiene todos los modelos disponibles
+   * GET /chat/models
+   */
+  @Get('models')
+  getModels(): ModelsResponse {
+    return this.chatService.getModelsInfo();
+  }
+
+  /**
+   * Cambia el modelo de LLM
+   * PUT /chat/models
+   */
+  @Put('models')
+  setModel(@Body() dto: SetModelDto) {
+    this.logger.log(`Cambiando modelo a: ${dto.model}`);
+    return this.chatService.setModel(dto.model);
+  }
+
+  /**
    * Health check del servicio de chat
    * GET /chat/health
    */
   @Get('health')
   healthCheck() {
+    const providerInfo = this.chatService.getProviderInfo();
     return {
       status: 'ok',
       timestamp: new Date().toISOString(),
-      provider: this.chatService.getProviderInfo(),
+      provider: providerInfo.current,
+      model: providerInfo.currentModel,
+      availableProviders: providerInfo.available,
     };
   }
 }

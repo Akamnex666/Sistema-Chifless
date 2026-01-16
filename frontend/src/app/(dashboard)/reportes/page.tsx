@@ -32,11 +32,17 @@ export default function ReportesPage() {
         <AlertTriangle className="mx-auto mb-4 text-red-500" size={48} />
         <h2 className="text-xl font-bold text-red-700 mb-2">Error al cargar reportes</h2>
         <p className="text-red-600">
-          Verifica que el servidor GraphQL esté corriendo en el puerto 8000
+          Verifica que el servidor GraphQL esté corriendo en el puerto 8001
         </p>
         <p className="text-sm text-red-500 mt-2">
           {errorVentas?.message || errorProduccion?.message || errorInventario?.message}
         </p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }

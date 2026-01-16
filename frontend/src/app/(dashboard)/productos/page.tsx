@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 import { useProductos, useDeleteProducto } from '@/hooks/useProductos';
 import { Producto } from '@/types';
 import { Card, Table, Button, Modal } from '@/components/ui';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
 import ProductoForm from './ProductoForm';
 
 export default function ProductosPage() {
-  const { data: productos = [], isLoading } = useProductos();
+  const { data: productos = [], isLoading, error, refetch } = useProductos();
   const deleteProducto = useDeleteProducto();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +60,33 @@ export default function ProductosPage() {
   ];
 
   if (isLoading) {
-    return <div className="text-center py-8">Cargando productos...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-gray-600">Cargando productos...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-md mx-auto mt-12">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-red-800 mb-2">Error al cargar productos</h3>
+          <p className="text-red-600 text-sm mb-4">
+            {(error as Error).message || 'No se pudo conectar con el servidor'}
+          </p>
+          <p className="text-gray-500 text-xs mb-4">
+            Asegúrate de que el API Rest esté corriendo en el puerto 3000
+          </p>
+          <Button onClick={() => refetch()} variant="primary">
+            <RefreshCw size={16} className="mr-2" />
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
