@@ -39,6 +39,7 @@ export interface ChatRequest {
   images?: string[];
   history?: { role: 'user' | 'assistant'; content: string }[];
   sessionId?: string;
+  model?: string;
 }
 
 export interface ChatResponse {
@@ -46,11 +47,41 @@ export interface ChatResponse {
   toolsUsed?: string[];
   sessionId: string;
   timestamp: string;
+  model?: string;
+  provider?: string;
 }
 
 export interface ProviderInfo {
   current: string;
+  currentModel: string;
   available: string[];
+}
+
+export type ProviderType = 'gemini' | 'grok' | 'openai' | 'groq';
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  provider: ProviderType;
+  description: string;
+  maxTokens: number;
+  supportsVision: boolean;
+  supportsTools: boolean;
+}
+
+export interface ProviderStatus {
+  provider: ProviderType;
+  name: string;
+  configured: boolean;
+  currentModel: string;
+  available: boolean;
+}
+
+export interface ModelsResponse {
+  currentProvider: ProviderType;
+  currentModel: string;
+  providers: ProviderStatus[];
+  models: ModelInfo[];
 }
 
 /**
@@ -85,9 +116,33 @@ export async function getProviderInfo(): Promise<ProviderInfo> {
 }
 
 /**
+ * Obtiene todos los modelos disponibles
+ */
+export async function getModelsInfo(): Promise<ModelsResponse> {
+  const response = await aiClient.get<ModelsResponse>('/chat/models');
+  return response.data;
+}
+
+/**
+ * Cambia el proveedor de LLM
+ */
+export async function setProvider(provider: ProviderType): Promise<{ success: boolean; message: string }> {
+  const response = await aiClient.put('/chat/provider', { provider });
+  return response.data;
+}
+
+/**
+ * Cambia el modelo de LLM
+ */
+export async function setModel(model: string): Promise<{ success: boolean; message: string }> {
+  const response = await aiClient.put('/chat/models', { model });
+  return response.data;
+}
+
+/**
  * Health check del servicio
  */
-export async function healthCheck(): Promise<{ status: string; timestamp: string; provider: ProviderInfo }> {
+export async function healthCheck(): Promise<{ status: string; timestamp: string; provider: string; model: string }> {
   const response = await aiClient.get('/chat/health');
   return response.data;
 }
