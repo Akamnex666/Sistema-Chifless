@@ -3,7 +3,7 @@ import respx
 from httpx import Response
 
 from infrastructure.http_client import RESTClient
-from application.usecases import ReportService
+from GraphQL.app.usecases import ReportService
 
 
 @pytest.mark.asyncio

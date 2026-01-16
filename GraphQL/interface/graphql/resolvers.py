@@ -1,6 +1,6 @@
 import strawberry
 from typing import List, Optional
-from application.usecases import ReportService
+from app.usecases import ReportService
 from interface.graphql.types import (
     PedidoResumen,
     ConsumoInsumo,
