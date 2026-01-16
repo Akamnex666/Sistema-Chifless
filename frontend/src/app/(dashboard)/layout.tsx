@@ -3,7 +3,6 @@
 import React from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
-import { ChatbotFloating } from '@/components/chat/ChatbotFloating';
 import AuthGate from '@/components/AuthGate';
 
 export default function DashboardLayout({
@@ -23,7 +22,6 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
-      <ChatbotFloating />
     </>
   );
 }
