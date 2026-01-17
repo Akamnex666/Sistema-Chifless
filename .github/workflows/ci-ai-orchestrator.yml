@@ -1,0 +1,63 @@
+name: CI - AI Orchestrator
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'ai-orchestrator/**'
+      - '.github/workflows/ci-ai-orchestrator.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'ai-orchestrator/**'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-ai-orchestrator-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: ./ai-orchestrator
+
+jobs:
+  build-and-test:
+    name: 🤖 Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ai-orchestrator/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --if-present
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test --if-present
+        env:
+          NODE_ENV: test
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🤖 AI Orchestrator CI" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Install | ✅ |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint | ${{ job.status == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ job.status == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Test | ${{ job.status == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY

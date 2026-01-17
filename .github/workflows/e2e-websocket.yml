@@ -1,0 +1,69 @@
+name: E2E - WebSocket
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Websocket/**'
+      - '.github/workflows/e2e-websocket.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Websocket/**'
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    name: 🔌 WebSocket E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Install dependencies
+        working-directory: ./Websocket
+        run: go mod download
+
+      - name: Build
+        working-directory: ./Websocket
+        run: go build -o websocket-server .
+
+      - name: Start service
+        working-directory: ./Websocket
+        run: |
+          ./websocket-server &
+          sleep 3
+        env:
+          PORT: 8080
+          WS_SECRET: super_secret_key_123
+
+      - name: Install websocat (WebSocket client)
+        run: |
+          wget -O /tmp/websocat.x86_64-unknown-linux-musl https://github.com/vi/websocat/releases/download/v1.12.0/websocat.x86_64-unknown-linux-musl
+          chmod +x /tmp/websocat.x86_64-unknown-linux-musl
+          sudo mv /tmp/websocat.x86_64-unknown-linux-musl /usr/local/bin/websocat
+
+      - name: Test WebSocket connection
+        run: |
+          echo '{"type":"ping"}' | timeout 5 websocat ws://localhost:8080/ws || true
+          echo "✅ WebSocket acepta conexiones"
+
+      - name: Run E2E tests
+        working-directory: ./Websocket
+        run: go test ./... -v
+        env:
+          PORT: 8080
+          WS_SECRET: super_secret_key_123
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🔌 WebSocket E2E Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY

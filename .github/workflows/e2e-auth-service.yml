@@ -1,0 +1,126 @@
+name: E2E - Auth-Service
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Auth-Service/**'
+      - '.github/workflows/e2e-auth-service.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Auth-Service/**'
+  workflow_dispatch:
+
+env:
+  JWT_SECRET: e2e-test-jwt-secret-sistema-chifles-2026
+
+jobs:
+  e2e-test:
+    name: 🔐 Auth-Service E2E Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: auth_user
+          POSTGRES_PASSWORD: auth_secret_2024
+          POSTGRES_DB: auth_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./Auth-Service
+        run: npm ci
+
+      - name: Build
+        working-directory: ./Auth-Service
+        run: npm run build
+
+      - name: Start service
+        working-directory: ./Auth-Service
+        run: |
+          npm run start:prod &
+          sleep 5
+        env:
+          NODE_ENV: test
+          PORT: 3001
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: auth_user
+          DB_PASSWORD: auth_secret_2024
+          DB_DATABASE: auth_db
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+          JWT_ACCESS_EXPIRES: 15m
+          JWT_REFRESH_EXPIRES: 7d
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:3001/docs || exit 1
+          echo "✅ Auth-Service está corriendo"
+
+      - name: Test registration
+        run: |
+          RESPONSE=$(curl -s -X POST http://localhost:3001/api/auth/register \
+            -H "Content-Type: application/json" \
+            -d '{"email": "test@e2e.com", "password": "Test123!", "nombre": "Test E2E"}')
+          
+          echo "Register response: $RESPONSE"
+          
+          if echo "$RESPONSE" | jq -e '.user' > /dev/null 2>&1; then
+            echo "✅ Usuario registrado correctamente"
+          else
+            echo "❌ Error en registro"
+            exit 1
+          fi
+
+      - name: Test login
+        run: |
+          RESPONSE=$(curl -s -X POST http://localhost:3001/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d '{"email": "test@e2e.com", "password": "Test123!"}')
+          
+          echo "Login response: $RESPONSE"
+          
+          TOKEN=$(echo $RESPONSE | jq -r '.tokens.accessToken')
+          
+          if [ "$TOKEN" != "null" ] && [ -n "$TOKEN" ]; then
+            echo "✅ Login exitoso"
+          else
+            echo "❌ Error en login"
+            exit 1
+          fi
+
+      - name: Run E2E tests
+        working-directory: ./Auth-Service
+        run: npm run test:e2e --if-present
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USERNAME: auth_user
+          DB_PASSWORD: auth_secret_2024
+          DB_DATABASE: auth_db
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🔐 Auth-Service E2E Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY

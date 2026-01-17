@@ -1,0 +1,79 @@
+name: E2E - GraphQL
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'GraphQL/**'
+      - '.github/workflows/e2e-graphql.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'GraphQL/**'
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    name: 📊 GraphQL E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: ./GraphQL
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest httpx pytest-asyncio
+
+      - name: Start service
+        working-directory: ./GraphQL
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+        env:
+          API_URL: http://localhost:3000/chifles
+          AUTH_SERVICE_URL: http://localhost:3001/api
+          API_LOGIN_EMAIL: admin@chifles.com
+          API_LOGIN_PASSWORD: Admin123!
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:8000/health || exit 1
+          echo "✅ GraphQL está corriendo"
+
+      - name: Test GraphQL query
+        run: |
+          RESPONSE=$(curl -s -X POST http://localhost:8000/graphql \
+            -H "Content-Type: application/json" \
+            -d '{"query": "{ __typename }"}')
+          
+          echo "GraphQL response: $RESPONSE"
+          
+          if echo "$RESPONSE" | jq -e '.data' > /dev/null 2>&1; then
+            echo "✅ GraphQL query funcionando"
+          else
+            echo "❌ Error en GraphQL"
+            exit 1
+          fi
+
+      - name: Run E2E tests
+        working-directory: ./GraphQL
+        run: pytest tests/ -v --tb=short
+        env:
+          API_URL: http://localhost:3000/chifles
+          AUTH_SERVICE_URL: http://localhost:3001/api
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 📊 GraphQL E2E Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY

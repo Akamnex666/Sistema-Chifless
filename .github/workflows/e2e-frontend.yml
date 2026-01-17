@@ -1,0 +1,79 @@
+name: E2E - Frontend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/e2e-frontend.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    name: 🖥️ Frontend E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_REST_URL: http://localhost:3000
+          NEXT_PUBLIC_AUTH_SERVICE_URL: http://localhost:3001
+          NEXT_PUBLIC_GRAPHQL_URL: http://localhost:8000
+          NEXT_PUBLIC_WEBSOCKET_URL: ws://localhost:8080
+
+      - name: Start frontend
+        working-directory: ./frontend
+        run: |
+          npm start &
+          sleep 10
+        env:
+          NEXT_PUBLIC_API_REST_URL: http://localhost:3000
+          NEXT_PUBLIC_AUTH_SERVICE_URL: http://localhost:3001
+          NEXT_PUBLIC_GRAPHQL_URL: http://localhost:8000
+          NEXT_PUBLIC_WEBSOCKET_URL: ws://localhost:8080
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:3000 || exit 1
+          echo "✅ Frontend está corriendo"
+
+      - name: Install Playwright
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: ./frontend
+        run: npm run test:e2e --if-present
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🖥️ Frontend E2E Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,92 @@
+name: E2E - Api-Rest
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Api-Rest/**'
+      - '.github/workflows/e2e-api-rest.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'Api-Rest/**'
+  workflow_dispatch:
+
+env:
+  JWT_SECRET: e2e-test-jwt-secret-sistema-chifles-2026
+
+jobs:
+  e2e-test:
+    name: 🧪 Api-Rest E2E Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: admin
+          POSTGRES_PASSWORD: admin123
+          POSTGRES_DB: sistema-chifles
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./Api-Rest
+        run: npm ci
+
+      - name: Build
+        working-directory: ./Api-Rest
+        run: npm run build
+
+      - name: Start service
+        working-directory: ./Api-Rest
+        run: |
+          npm run start:prod &
+          sleep 5
+        env:
+          NODE_ENV: test
+          PORT: 3000
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: sistema-chifles
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:3000/chifles/auth/info || exit 1
+          echo "✅ Api-Rest está corriendo"
+
+      - name: Run E2E tests
+        working-directory: ./Api-Rest
+        run: npm run test:e2e --if-present
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: admin
+          DB_PASSWORD: admin123
+          DB_NAME: sistema-chifles
+          JWT_SECRET: ${{ env.JWT_SECRET }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🧪 Api-Rest E2E Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY
