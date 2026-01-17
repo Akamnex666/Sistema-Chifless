@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui';
 
@@ -26,7 +26,8 @@ interface PaymentForm {
   pedidoId: string;
 }
 
-export default function PagosPage() {
+// Componente interno que usa useSearchParams
+function PagosContent() {
   const searchParams = useSearchParams();
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
@@ -311,5 +312,33 @@ export default function PagosPage() {
         </div>
       </Card>
     </div>
+  );
+}
+
+// Loading fallback para Suspense
+function PagosLoading() {
+  return (
+    <div className="max-w-lg mx-auto p-6">
+      <Card className="p-8">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-3/4 mx-auto"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
+          <div className="space-y-3 mt-6">
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+            <div className="h-12 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// Componente principal con Suspense boundary
+export default function PagosPage() {
+  return (
+    <Suspense fallback={<PagosLoading />}>
+      <PagosContent />
+    </Suspense>
   );
 }
