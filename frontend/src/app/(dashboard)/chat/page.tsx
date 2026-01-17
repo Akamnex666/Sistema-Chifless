@@ -109,8 +109,9 @@ export default function ChatPage() {
       setIsModelDropdownOpen(false);
       // Recargar información de modelos
       await loadModels();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al cambiar el modelo');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Error al cambiar el modelo');
     } finally {
       setIsChangingModel(false);
     }
@@ -120,19 +121,6 @@ export default function ChatPage() {
     if (!modelsData) return 'Cargando...';
     const model = modelsData.models.find(m => m.id === currentModel);
     return model ? model.name : currentModel;
-  };
-
-  const getProviderDisplayName = (): string => {
-    if (!modelsData) return '';
-    const model = modelsData.models.find(m => m.id === currentModel);
-    if (!model) return modelsData.currentProvider;
-    switch (model.provider) {
-      case 'gemini': return 'Google Gemini';
-      case 'grok': return 'xAI Grok';
-      case 'openai': return 'OpenAI';
-      case 'groq': return 'Groq';
-      default: return model.provider;
-    }
   };
 
   const getAvailableModels = (): ModelInfo[] => {
@@ -156,7 +144,7 @@ export default function ChatPage() {
         const base64 = await fileToBase64(file);
         setSelectedImage(base64);
         setSelectedImageName(file.name);
-      } catch (err) {
+      } catch {
         setError('Error al procesar la imagen');
       }
     }
@@ -205,8 +193,9 @@ export default function ChatPage() {
 
       setMessages(prev => [...prev, assistantMessage]);
       removeSelectedImage();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al enviar el mensaje');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Error al enviar el mensaje');
       console.error('Error sending message:', err);
     } finally {
       setIsLoading(false);
@@ -350,6 +339,7 @@ export default function ChatPage() {
               {/* Imagen adjunta */}
               {message.image && (
                 <div className="mb-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={message.image}
                     alt="Imagen adjunta"
@@ -419,6 +409,7 @@ export default function ChatPage() {
       {selectedImage && (
         <div className="bg-white border-x border-gray-200 px-4 py-2">
           <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2 w-fit">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={selectedImage}
               alt="Preview"

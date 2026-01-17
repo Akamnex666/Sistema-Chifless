@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Modal, Input } from '@/components/ui';
 import { useCreateOrdenProduccion, useUpdateOrdenProduccion } from '@/hooks/useOrdenesProduccion';
 import { OrdenProduccion } from '@/types';
@@ -17,44 +17,48 @@ interface OrdenFormData {
   estado: 'pendiente' | 'en_proceso' | 'completada' | 'cancelada';
 }
 
+// Función para obtener datos iniciales
+const getInitialOrdenData = (orden: OrdenProduccion | null | undefined): OrdenFormData => {
+  if (orden) {
+    const fechaOrden = orden.fecha_orden 
+      ? new Date(orden.fecha_orden).toISOString().split('T')[0]
+      : new Date().toISOString().split('T')[0];
+    return {
+      id_pedido: String(orden.id_pedido || ''),
+      fecha_orden: fechaOrden,
+      estado: orden.estado || 'pendiente',
+    };
+  }
+  return {
+    id_pedido: '',
+    fecha_orden: new Date().toISOString().split('T')[0],
+    estado: 'pendiente',
+  };
+};
+
 export function OrdenProduccionForm({ isOpen, onClose, ordenToEdit }: OrdenProduccionFormProps) {
   const createOrden = useCreateOrdenProduccion();
   const updateOrden = useUpdateOrdenProduccion();
   const isEditMode = !!ordenToEdit;
   
-  const [formData, setFormData] = useState<OrdenFormData>({
-    id_pedido: '',
-    fecha_orden: new Date().toISOString().split('T')[0],
-    estado: 'pendiente',
-  });
+  const ordenKey = ordenToEdit?.id ?? 'new';
+  const [formData, setFormData] = useState<OrdenFormData>(() => getInitialOrdenData(ordenToEdit));
 
-  useEffect(() => {
-    if (ordenToEdit) {
-      const fechaOrden = ordenToEdit.fecha_orden 
-        ? new Date(ordenToEdit.fecha_orden).toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0];
-      
-      setFormData({
-        id_pedido: String(ordenToEdit.id_pedido || ''),
-        fecha_orden: fechaOrden,
-        estado: ordenToEdit.estado || 'pendiente',
-      });
-    } else {
-      resetForm();
+  // Sincronizar cuando cambia ordenToEdit
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData(getInitialOrdenData(ordenToEdit));
     }
-  }, [ordenToEdit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ordenKey, isOpen]);
+
+  const resetForm = () => {
+    setFormData(getInitialOrdenData(null));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      id_pedido: '',
-      fecha_orden: new Date().toISOString().split('T')[0],
-      estado: 'pendiente',
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

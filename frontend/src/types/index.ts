@@ -136,7 +136,7 @@ export type WebSocketEventType =
 
 export interface WebSocketEvent {
   type: WebSocketEventType;
-  payload: any;
+  payload: Record<string, unknown>;
   timestamp?: string;
 }
 

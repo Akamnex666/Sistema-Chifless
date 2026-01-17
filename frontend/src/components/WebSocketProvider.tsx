@@ -14,23 +14,24 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Registrar handler único para mensajes; así evitamos múltiples handlers desde varios componentes
-    const messageHandler = (event: any) => {
-      if (event?.type && event?.payload) {
-        const notification = createNotificationFromEvent(event.type as WebSocketEventType, event.payload);
+    const messageHandler = (event: unknown) => {
+      const wsEvent = event as { type?: string; payload?: Record<string, unknown> };
+      if (wsEvent?.type && wsEvent?.payload) {
+        const notification = createNotificationFromEvent(wsEvent.type as WebSocketEventType, wsEvent.payload);
         addNotification(notification);
 
         try {
-          if (event.type === 'client.updated' || event.type === 'client.created') {
-            const cliente = event.payload;
+          if (wsEvent.type === 'client.updated' || wsEvent.type === 'client.created') {
+            const cliente = wsEvent.payload as Record<string, unknown>;
             const id = cliente?.id ? Number(cliente.id) : undefined;
 
             if (id !== undefined) {
               queryClient.setQueryData(['clientes', id], cliente);
             }
 
-              queryClient.setQueryData(['clientes'], (old: any[] | undefined) => {
+              queryClient.setQueryData(['clientes'], (old: Record<string, unknown>[] | undefined) => {
                 if (!old) return old;
-                if (event.type === 'client.created') {
+                if (wsEvent.type === 'client.created') {
                   // Upsert: eliminar cualquier cliente con el mismo id antes de añadir
                   const filtered = old.filter((c) => Number(c.id) !== Number(cliente.id));
                   return [cliente, ...filtered];

@@ -50,7 +50,7 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
 // Helper para convertir eventos WebSocket a notificaciones con mensaje legible
 export function createNotificationFromEvent(
   type: WebSocketEventType,
-  payload: any
+  payload: Record<string, unknown>
 ): NotificationMessage {
   const timestamp = new Date();
   const id = `${type}-${timestamp.getTime()}-${Math.random()}`;

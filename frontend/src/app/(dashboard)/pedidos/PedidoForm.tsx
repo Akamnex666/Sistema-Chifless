@@ -25,12 +25,28 @@ interface NuevoPedidoForm {
   detalles: DetallePedidoForm[];
 }
 
-const getInitialFormData = (): NuevoPedidoForm => ({
-  fecha: new Date().toISOString().split('T')[0],
-  estado: 'pendiente',
-  clienteId: '',
-  detalles: [{ productoId: '', cantidad_solicitada: '', precio_unitario: '' }],
-});
+const getFormDataFromPedido = (pedido: Pedido | null | undefined): NuevoPedidoForm => {
+  if (pedido) {
+    return {
+      fecha: pedido.fecha?.split('T')[0] || new Date().toISOString().split('T')[0],
+      estado: pedido.estado || 'pendiente',
+      clienteId: pedido.clienteId?.toString() || '',
+      detalles: pedido.detalles && pedido.detalles.length > 0
+        ? pedido.detalles.map((d) => ({
+            productoId: d.productoId?.toString() || '',
+            cantidad_solicitada: d.cantidad?.toString() || '',
+            precio_unitario: d.precio_unitario?.toString() || '',
+          }))
+        : [{ productoId: '', cantidad_solicitada: '', precio_unitario: '' }],
+    };
+  }
+  return {
+    fecha: new Date().toISOString().split('T')[0],
+    estado: 'pendiente',
+    clienteId: '',
+    detalles: [{ productoId: '', cantidad_solicitada: '', precio_unitario: '' }],
+  };
+};
 
 export function PedidoForm({ isOpen, onClose, pedidoToEdit }: PedidoFormProps) {
   const createPedido = useCreatePedido();
@@ -38,26 +54,11 @@ export function PedidoForm({ isOpen, onClose, pedidoToEdit }: PedidoFormProps) {
   
   const isEditing = !!pedidoToEdit;
 
-  const [formData, setFormData] = useState<NuevoPedidoForm>(getInitialFormData());
+  const [formData, setFormData] = useState<NuevoPedidoForm>(() => getFormDataFromPedido(pedidoToEdit));
 
-  // Cargar datos cuando se edita
+  // Sincronizar cuando cambia pedidoToEdit - esto es necesario para el modal
   useEffect(() => {
-    if (pedidoToEdit) {
-      setFormData({
-        fecha: pedidoToEdit.fecha?.split('T')[0] || new Date().toISOString().split('T')[0],
-        estado: pedidoToEdit.estado || 'pendiente',
-        clienteId: pedidoToEdit.clienteId?.toString() || '',
-        detalles: pedidoToEdit.detalles && pedidoToEdit.detalles.length > 0
-          ? pedidoToEdit.detalles.map((d) => ({
-              productoId: d.productoId?.toString() || '',
-              cantidad_solicitada: d.cantidad?.toString() || '',
-              precio_unitario: d.precio_unitario?.toString() || '',
-            }))
-          : [{ productoId: '', cantidad_solicitada: '', precio_unitario: '' }],
-      });
-    } else {
-      setFormData(getInitialFormData());
-    }
+    setFormData(getFormDataFromPedido(pedidoToEdit));
   }, [pedidoToEdit]);
 
   const handleInputChange = (
@@ -112,7 +113,7 @@ export function PedidoForm({ isOpen, onClose, pedidoToEdit }: PedidoFormProps) {
   };
 
   const resetForm = () => {
-    setFormData(getInitialFormData());
+    setFormData(getFormDataFromPedido(null));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

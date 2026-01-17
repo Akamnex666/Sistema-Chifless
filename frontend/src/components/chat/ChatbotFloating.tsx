@@ -189,6 +189,7 @@ export function ChatbotFloating() {
                   }`}
                 >
                   {message.image && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={message.image}
                       alt="Adjunto"
@@ -229,6 +230,7 @@ export function ChatbotFloating() {
           {selectedImage && (
             <div className="px-4 py-2 border-t border-gray-100">
               <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selectedImage}
                   alt="Preview"
@@ -260,7 +262,9 @@ export function ChatbotFloating() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                aria-label="Adjuntar imagen"
               >
+                {/* eslint-disable-next-line jsx-a11y/alt-text -- Este es un icono de lucide-react, no un elemento img */}
                 <Image size={20} />
               </button>
 

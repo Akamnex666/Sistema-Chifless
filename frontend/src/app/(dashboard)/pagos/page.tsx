@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui';
 
@@ -32,27 +32,18 @@ export default function PagosPage() {
   const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Cargar datos de URL si vienen del chatbot - inicializar con los valores de URL
+  const initialMonto = searchParams.get('monto') || '';
+  const initialPedidoId = searchParams.get('pedidoId') || '';
+  
   const [formData, setFormData] = useState<PaymentForm>({
     cardNumber: '',
     cardHolder: '',
     expiryDate: '',
     cvv: '',
-    amount: '',
-    pedidoId: '',
+    amount: initialMonto,
+    pedidoId: initialPedidoId,
   });
-
-  // Cargar datos de URL si vienen del chatbot
-  useEffect(() => {
-    const monto = searchParams.get('monto');
-    const pedidoId = searchParams.get('pedidoId');
-    
-    if (monto) {
-      setFormData(prev => ({ ...prev, amount: monto }));
-    }
-    if (pedidoId) {
-      setFormData(prev => ({ ...prev, pedidoId }));
-    }
-  }, [searchParams]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

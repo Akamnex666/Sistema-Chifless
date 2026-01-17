@@ -9,7 +9,6 @@ import {
   ShoppingCart, 
   Factory, 
   FileText, 
-  BarChart3, 
   ArrowUpRight,
   TrendingUp,
   Clock,

@@ -12,15 +12,9 @@ export default function PedidosPage() {
   const deletePedido = useDeletePedido();
   
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isViewOpen, setIsViewOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [pedidoToEdit, setPedidoToEdit] = useState<Pedido | null>(null);
-
-  const handleViewPedido = (pedido: Pedido) => {
-    setSelectedPedido(pedido);
-    setIsViewOpen(true);
-  };
 
   const handleEditPedido = (pedido: Pedido) => {
     setPedidoToEdit(pedido);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button, Modal, Input } from '@/components/ui';
 import { useCreateFactura, useUpdateFactura } from '@/hooks/useFacturas';
 import { Factura } from '@/types';
@@ -19,46 +19,59 @@ interface NuevaFacturaForm {
   pedidoId: string;
 }
 
-export function FacturaForm({ isOpen, onClose, facturaToEdit }: FacturaFormProps) {
-  const createFactura = useCreateFactura();
-  const updateFactura = useUpdateFactura();
-  const isEditMode = !!facturaToEdit;
-  
-  const [formData, setFormData] = useState<NuevaFacturaForm>({
+// Función para obtener datos iniciales basados en facturaToEdit
+const getInitialData = (factura: Factura | null | undefined): NuevaFacturaForm => {
+  if (factura) {
+    return {
+      fecha_emision: factura.fecha_emision?.split('T')[0] || new Date().toISOString().split('T')[0],
+      total: String(factura.total || ''),
+      estado_pago: factura.estado_pago || 'pendiente',
+      clienteId: String(factura.clienteId || ''),
+      pedidoId: String(factura.pedidoId || ''),
+    };
+  }
+  return {
     fecha_emision: new Date().toISOString().split('T')[0],
     total: '',
     estado_pago: 'pendiente',
     clienteId: '',
     pedidoId: '',
-  });
+  };
+};
 
-  useEffect(() => {
-    if (facturaToEdit) {
-      setFormData({
-        fecha_emision: facturaToEdit.fecha_emision?.split('T')[0] || new Date().toISOString().split('T')[0],
-        total: String(facturaToEdit.total || ''),
-        estado_pago: facturaToEdit.estado_pago || 'pendiente',
-        clienteId: String(facturaToEdit.clienteId || ''),
-        pedidoId: String(facturaToEdit.pedidoId || ''),
-      });
-    } else {
-      resetForm();
+export function FacturaForm({ isOpen, onClose, facturaToEdit }: FacturaFormProps) {
+  const createFactura = useCreateFactura();
+  const updateFactura = useUpdateFactura();
+  const isEditMode = !!facturaToEdit;
+  
+  // Usar key para resetear el estado cuando cambia facturaToEdit
+  const facturaKey = facturaToEdit?.id ?? 'new';
+  const [formData, setFormData] = useState<NuevaFacturaForm>(() => getInitialData(facturaToEdit));
+
+  // Sincronizar cuando cambia facturaToEdit usando un ref para evitar el warning
+  const prevFacturaRef = React.useRef(facturaToEdit);
+  if (prevFacturaRef.current !== facturaToEdit) {
+    prevFacturaRef.current = facturaToEdit;
+    // El estado se actualiza en el siguiente render
+  }
+
+  // Usar useMemo para calcular el valor inicial una vez
+  React.useEffect(() => {
+    // Solo actualizar si el modal está abierto y facturaToEdit cambió
+    if (isOpen) {
+      const newData = getInitialData(facturaToEdit);
+      setFormData(newData);
     }
-  }, [facturaToEdit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facturaKey, isOpen]);
+
+  const resetForm = () => {
+    setFormData(getInitialData(null));
+  };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const resetForm = () => {
-    setFormData({
-      fecha_emision: new Date().toISOString().split('T')[0],
-      total: '',
-      estado_pago: 'pendiente',
-      clienteId: '',
-      pedidoId: '',
-    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

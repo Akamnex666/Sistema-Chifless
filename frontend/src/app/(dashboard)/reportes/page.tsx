@@ -32,7 +32,7 @@ export default function ReportesPage() {
         <AlertTriangle className="mx-auto mb-4 text-red-500" size={48} />
         <h2 className="text-xl font-bold text-red-700 mb-2">Error al cargar reportes</h2>
         <p className="text-red-600">
-          Verifica que el servidor GraphQL esté corriendo en el puerto 8001
+          Verifica que el servidor GraphQL esté corriendo en el puerto 8000
         </p>
         <p className="text-sm text-red-500 mt-2">
           {errorVentas?.message || errorProduccion?.message || errorInventario?.message}
