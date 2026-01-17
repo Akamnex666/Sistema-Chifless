@@ -56,6 +56,17 @@ updates:
       - "dependencies"
       - "websocket"
 
+  # AI Orchestrator (NestJS)
+  - package-ecosystem: "npm"
+    directory: "/ai-orchestrator"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ai-orchestrator"
+
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
