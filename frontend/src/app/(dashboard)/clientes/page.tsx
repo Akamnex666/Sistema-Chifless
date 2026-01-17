@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useClientes, useDeleteCliente } from '@/hooks/useClientes';
 import { Cliente } from '@/types';
 import { Card, Table, Button, Modal } from '@/components/ui';
-import { Plus, Edit, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
 import ClienteForm from './ClienteForm';
 
 export default function ClientesPage() {
@@ -48,13 +48,15 @@ export default function ClientesPage() {
           <Button
             size="sm"
             variant="secondary"
+            title="Editar"
             onClick={() => handleEdit(row)}
           >
-            <Edit size={16} />
+            <Pencil size={16} />
           </Button>
           <Button
             size="sm"
             variant="danger"
+            title="Eliminar"
             onClick={() => setShowDeleteConfirm(row.id)}
           >
             <Trash2 size={16} />

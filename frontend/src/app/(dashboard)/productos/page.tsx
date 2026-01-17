@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useProductos, useDeleteProducto } from '@/hooks/useProductos';
 import { Producto } from '@/types';
 import { Card, Table, Button, Modal } from '@/components/ui';
-import { Plus, Edit, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
 import ProductoForm from './ProductoForm';
 
 export default function ProductosPage() {
@@ -48,10 +48,10 @@ export default function ProductosPage() {
       header: 'Acciones',
       accessor: (row: Producto) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => handleEdit(row)}>
-            <Edit size={16} />
+          <Button size="sm" variant="secondary" title="Editar" onClick={() => handleEdit(row)}>
+            <Pencil size={16} />
           </Button>
-          <Button size="sm" variant="danger" onClick={() => setShowDeleteConfirm(row.id)}>
+          <Button size="sm" variant="danger" title="Eliminar" onClick={() => setShowDeleteConfirm(row.id)}>
             <Trash2 size={16} />
           </Button>
         </div>

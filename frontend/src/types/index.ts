@@ -44,20 +44,20 @@ export interface ProductoInsumo {
 
 export interface Pedido {
   id: number;
-  id_cliente: number;
-  fecha_pedido: Date;
-  estado: 'pendiente' | 'en_proceso' | 'completado' | 'cancelado';
+  fecha: string;
   total: number;
+  estado: string;
+  clienteId: number;
+  facturaId?: number;
   cliente?: Cliente;
+  factura?: Factura;
   detalles?: DetallePedido[];
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export interface DetallePedido {
   id: number;
-  id_pedido: number;
-  id_producto: number;
+  pedidoId: number;
+  productoId: number;
   cantidad: number;
   precio_unitario: number;
   subtotal: number;
@@ -85,15 +85,13 @@ export interface DetalleOrdenProduccion {
 
 export interface Factura {
   id: number;
-  id_pedido: number;
-  numero_factura: string;
-  fecha_emision: Date;
-  subtotal: number;
-  igv: number;
+  fecha_emision: string;
   total: number;
+  estado_pago: string;
+  clienteId: number;
+  pedidoId: number;
+  cliente?: Cliente;
   pedido?: Pedido;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 // Tipos para notificaciones WebSocket

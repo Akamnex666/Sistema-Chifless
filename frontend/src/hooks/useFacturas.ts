@@ -6,7 +6,7 @@ export function useFacturas() {
   return useQuery<Factura[]>({
     queryKey: ['facturas'],
     queryFn: async () => {
-      const { data } = await apiClient.get('/factura');
+      const { data } = await apiClient.get('/facturas');
       return data;
     },
   });
@@ -16,7 +16,7 @@ export function useFactura(id: number) {
   return useQuery<Factura>({
     queryKey: ['facturas', id],
     queryFn: async () => {
-      const { data } = await apiClient.get(`/factura/${id}`);
+      const { data } = await apiClient.get(`/facturas/${id}`);
       return data;
     },
     enabled: !!id,
@@ -28,7 +28,7 @@ export function useCreateFactura() {
   
   return useMutation({
     mutationFn: async (factura: Omit<Factura, 'id'>) => {
-      const { data } = await apiClient.post('/factura', factura);
+      const { data } = await apiClient.post('/facturas', factura);
       return data;
     },
     onSuccess: () => {
@@ -42,7 +42,7 @@ export function useUpdateFactura() {
   
   return useMutation({
     mutationFn: async ({ id, ...factura }: Partial<Factura> & { id: number }) => {
-      const { data } = await apiClient.put(`/factura/${id}`, factura);
+      const { data } = await apiClient.put(`/facturas/${id}`, factura);
       return data;
     },
     onSuccess: (_, variables) => {
@@ -57,7 +57,7 @@ export function useDeleteFactura() {
   
   return useMutation({
     mutationFn: async (id: number) => {
-      await apiClient.delete(`/factura/${id}`);
+      await apiClient.delete(`/facturas/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facturas'] });

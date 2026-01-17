@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useInsumos, useDeleteInsumo } from '@/hooks/useInsumos';
 import { Insumo } from '@/types';
 import { Card, Table, Button, Modal } from '@/components/ui';
-import { Plus, Edit, Trash2, AlertTriangle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertTriangle, AlertCircle, RefreshCw } from 'lucide-react';
 import InsumoForm from './InsumoForm';
 
 export default function InsumosPage() {
@@ -44,10 +44,10 @@ export default function InsumosPage() {
       header: 'Acciones',
       accessor: (row: Insumo) => (
         <div className="flex gap-2">
-          <Button size="sm" variant="secondary" onClick={() => handleEdit(row)}>
-            <Edit size={16} />
+          <Button size="sm" variant="secondary" title="Editar" onClick={() => handleEdit(row)}>
+            <Pencil size={16} />
           </Button>
-          <Button size="sm" variant="danger" onClick={() => setShowDeleteConfirm(row.id)}>
+          <Button size="sm" variant="danger" title="Eliminar" onClick={() => setShowDeleteConfirm(row.id)}>
             <Trash2 size={16} />
           </Button>
         </div>
