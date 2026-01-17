@@ -42,9 +42,10 @@ jobs:
       - name: Start frontend
         working-directory: ./frontend
         run: |
-          npm start &
-          sleep 10
+          PORT=3005 npm run start &
+          sleep 15
         env:
+          PORT: 3005
           NEXT_PUBLIC_API_REST_URL: http://localhost:3000
           NEXT_PUBLIC_AUTH_SERVICE_URL: http://localhost:3001
           NEXT_PUBLIC_GRAPHQL_URL: http://localhost:8000
@@ -52,7 +53,19 @@ jobs:
 
       - name: Health check
         run: |
-          curl -f http://localhost:3000 || exit 1
+          max_attempts=10
+          attempt=0
+          until curl -f http://localhost:3005 || [ $attempt -eq $max_attempts ]; do
+            attempt=$((attempt + 1))
+            echo "Attempt $attempt/$max_attempts - waiting for frontend..."
+            sleep 3
+          done
+          
+          if [ $attempt -eq $max_attempts ]; then
+            echo "❌ Frontend no respondió después de $max_attempts intentos"
+            exit 1
+          fi
+          
           echo "✅ Frontend está corriendo"
 
       - name: Install Playwright
