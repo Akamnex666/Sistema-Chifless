@@ -16,35 +16,35 @@ concurrency:
   group: ci-graphql-${{ github.ref }}
   cancel-in-progress: true
 
-defaults:
-  run:
-    working-directory: ./GraphQL/service
-
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'
-          cache-dependency-path: GraphQL/service/requirements.txt
+          # La ruta del cache debe ser relativa a la raíz del repositorio
+          cache-dependency-path: GraphQL/requirements.txt
 
       - name: Install dependencies
+        # Se define el directorio de trabajo explícitamente en el paso
+        working-directory: ./GraphQL
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install ruff pytest-cov
 
       - name: Lint
+        working-directory: ./GraphQL
         run: ruff check . --ignore E501 || true
 
       - name: Test
+        working-directory: ./GraphQL
         run: pytest tests/ -v --tb=short || true
         env:
           API_URL: http://localhost:3000/chifles
@@ -54,18 +54,17 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
-          context: ./GraphQL/service
+          context: ./GraphQL
           push: false
           tags: sistema-chifles/graphql:${{ github.sha }}
           cache-from: type=gha

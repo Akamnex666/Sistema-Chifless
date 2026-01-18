@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Cliente } from '../../clientes/entities/cliente.entity';
 import { Pedido } from '../../pedidos/entities/pedido.entity';
 
@@ -22,11 +29,11 @@ export class Factura {
   @Column()
   pedidoId: number;
 
-  @ManyToOne(() => Cliente, cliente => cliente.facturas)
+  @ManyToOne(() => Cliente, (cliente) => cliente.facturas)
   @JoinColumn({ name: 'clienteId' })
   cliente: Cliente;
 
-  @OneToOne(() => Pedido, pedido => pedido.factura)
+  @OneToOne(() => Pedido, (pedido) => pedido.factura)
   @JoinColumn({ name: 'pedidoId' })
   pedido: Pedido;
 }

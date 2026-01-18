@@ -2,12 +2,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { wsService } from '@/services/websocket';
 
 export function useWebSocket() {
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(() => wsService.isConnected());
 
   useEffect(() => {
     // Conectar al WebSocket (idempotente)
     wsService.connect();
-    setIsConnected(wsService.isConnected());
 
     const connectHandler = () => {
       setIsConnected(true);
@@ -28,9 +27,9 @@ export function useWebSocket() {
     };
   }, []);
 
-  const subscribe = useCallback((eventType: string, callback: (data: any) => void) => {
-    wsService.on(eventType, callback);
-    return () => wsService.off(eventType, callback);
+  const subscribe = useCallback(<T = unknown>(eventType: string, callback: (data: T) => void) => {
+    wsService.on(eventType, callback as (data: unknown) => void);
+    return () => wsService.off(eventType, callback as (data: unknown) => void);
   }, []);
 
   return {

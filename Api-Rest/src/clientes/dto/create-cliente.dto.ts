@@ -19,5 +19,4 @@ export class CreateClienteDto {
 
   @IsEmail()
   email: string;
-
 }

@@ -1,7 +1,7 @@
 class WebSocketService {
   private socket: WebSocket | null = null;
   private connecting: boolean = false;
-  private listeners: Map<string, Set<(data: any) => void>> = new Map();
+  private listeners: Map<string, Set<(data: unknown) => void>> = new Map();
   private reconnectTimeout: NodeJS.Timeout | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
@@ -32,7 +32,7 @@ class WebSocketService {
       if (!/\/ws$/.test(this.url)) {
         this.url = this.url.replace(/\/+$/, '') + '/ws';
       }
-    } catch (e) {
+    } catch {
       this.url = 'ws://localhost:8081/ws';
     }
 
@@ -126,7 +126,7 @@ class WebSocketService {
   }
 
   // Suscribirse a eventos específicos
-  on(eventName: string, callback: (data: any) => void) {
+  on(eventName: string, callback: (data: unknown) => void) {
     if (!this.listeners.has(eventName)) {
       this.listeners.set(eventName, new Set());
     }
@@ -138,7 +138,7 @@ class WebSocketService {
   }
 
   // Desuscribirse de eventos
-  off(eventName: string, callback: (data: any) => void) {
+  off(eventName: string, callback: (data: unknown) => void) {
     const eventListeners = this.listeners.get(eventName);
     if (eventListeners) {
       eventListeners.delete(callback);
@@ -146,14 +146,14 @@ class WebSocketService {
   }
 
   // Notificar a todos los listeners de un evento
-  private notifyListeners(eventName: string, data: any) {
+  private notifyListeners(eventName: string, data: unknown) {
     const eventListeners = this.listeners.get(eventName);
     if (eventListeners) {
       eventListeners.forEach((callback) => callback(data));
     }
   }
 
-  send(data: any) {
+  send(data: unknown) {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(data));
     } else {

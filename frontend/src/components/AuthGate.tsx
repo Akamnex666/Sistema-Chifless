@@ -14,12 +14,12 @@ export default function AuthGate() {
     if (isLoading) return;
 
     // Rutas públicas donde no queremos forzar redirect
-    const publicPaths = ['/', '/login', '/api', '/api-docs'];
+    const publicPaths = ['/', '/login', '/register'];
 
     // Si estamos en una ruta pública
     if (publicPaths.includes(pathname || '')) {
-      // Si el usuario está autenticado y está en login o home, redirigir al dashboard
-      if ((pathname === '/' || pathname === '/login') && isAuthenticated) {
+      // Si el usuario está autenticado y está en login, register o home, redirigir al dashboard
+      if (isAuthenticated) {
         router.replace('/dashboard');
       }
       return;

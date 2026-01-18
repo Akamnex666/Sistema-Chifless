@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { DetallesOrdenProduccionService } from './detalles-orden-produccion.service';
 import { CreateDetalleOrdenProduccionDto } from './dto/create-detalles-orden-produccion.dto';
@@ -8,7 +17,9 @@ import { DetalleOrdenProduccion } from './entities/detalles-orden-produccion.ent
 @ApiBearerAuth()
 @Controller('detalles-orden-produccion')
 export class DetallesOrdenProduccionController {
-  constructor(private readonly detallesOrdenProduccionService: DetallesOrdenProduccionService) {}
+  constructor(
+    private readonly detallesOrdenProduccionService: DetallesOrdenProduccionService,
+  ) {}
 
   @Get()
   findAll(): Promise<DetalleOrdenProduccion[]> {
@@ -16,18 +27,28 @@ export class DetallesOrdenProduccionController {
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number): Promise<DetalleOrdenProduccion> {
+  findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<DetalleOrdenProduccion> {
     return this.detallesOrdenProduccionService.findOne(id);
   }
 
   @Get('orden/:ordenProduccionId')
-  findByOrdenProduccion(@Param('ordenProduccionId', ParseIntPipe) ordenProduccionId: number): Promise<DetalleOrdenProduccion[]> {
-    return this.detallesOrdenProduccionService.findByOrdenProduccion(ordenProduccionId);
+  findByOrdenProduccion(
+    @Param('ordenProduccionId', ParseIntPipe) ordenProduccionId: number,
+  ): Promise<DetalleOrdenProduccion[]> {
+    return this.detallesOrdenProduccionService.findByOrdenProduccion(
+      ordenProduccionId,
+    );
   }
 
   @Post()
-  create(@Body() createDetalleOrdenProduccionDto: CreateDetalleOrdenProduccionDto): Promise<DetalleOrdenProduccion> {
-    return this.detallesOrdenProduccionService.create(createDetalleOrdenProduccionDto);
+  create(
+    @Body() createDetalleOrdenProduccionDto: CreateDetalleOrdenProduccionDto,
+  ): Promise<DetalleOrdenProduccion> {
+    return this.detallesOrdenProduccionService.create(
+      createDetalleOrdenProduccionDto,
+    );
   }
 
   @Put(':id')
@@ -35,7 +56,10 @@ export class DetallesOrdenProduccionController {
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDetalleOrdenProduccionDto: UpdateDetalleOrdenProduccionDto,
   ): Promise<DetalleOrdenProduccion> {
-    return this.detallesOrdenProduccionService.update(id, updateDetalleOrdenProduccionDto);
+    return this.detallesOrdenProduccionService.update(
+      id,
+      updateDetalleOrdenProduccionDto,
+    );
   }
 
   @Delete(':id')

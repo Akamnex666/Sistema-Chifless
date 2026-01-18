@@ -26,54 +26,76 @@ export class OrdenesProduccionService {
       relations: ['producto', 'detalles'],
     });
     if (!orden) {
-      throw new NotFoundException(`Orden de producción con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Orden de producción con ID ${id} no encontrada`,
+      );
     }
     return orden;
   }
 
-  async create(createOrdenProduccionDto: CreateOrdenProduccionDto): Promise<OrdenProduccion> {
+  async create(
+    createOrdenProduccionDto: CreateOrdenProduccionDto,
+  ): Promise<OrdenProduccion> {
     // Crear la orden y sus detalles de orden de producción automáticamente
     // en una transacción para asegurar consistencia.
-    return await this.ordenProduccionRepository.manager.transaction(async (manager) => {
-      // Repositorios tipados dentro de la transacción
-      const ordenRepo = manager.getRepository<OrdenProduccion>(OrdenProduccion);
-      const productoInsumoRepo = manager.getRepository<ProductoInsumo>(ProductoInsumo);
-      const detalleRepo = manager.getRepository<DetalleOrdenProduccion>(DetalleOrdenProduccion);
+    return await this.ordenProduccionRepository.manager.transaction(
+      async (manager) => {
+        // Repositorios tipados dentro de la transacción
+        const ordenRepo =
+          manager.getRepository<OrdenProduccion>(OrdenProduccion);
+        const productoInsumoRepo =
+          manager.getRepository<ProductoInsumo>(ProductoInsumo);
+        const detalleRepo = manager.getRepository<DetalleOrdenProduccion>(
+          DetalleOrdenProduccion,
+        );
 
-      // 1) Crear y guardar la orden
-      const orden = ordenRepo.create(createOrdenProduccionDto as Partial<OrdenProduccion>);
-      const savedOrden = await ordenRepo.save(orden);
+        // 1) Crear y guardar la orden
+        const orden = ordenRepo.create(
+          createOrdenProduccionDto as Partial<OrdenProduccion>,
+        );
+        const savedOrden = await ordenRepo.save(orden);
 
-      // 2) Cargar los insumos necesarios para el producto
-      const productosInsumos = await productoInsumoRepo.find({
-        where: { productoId: createOrdenProduccionDto.productoId },
-      });
-
-      // 3) Crear detalles de orden de producción basados en la cantidad a producir
-      const cantidadAProducir = Number(createOrdenProduccionDto.cantidad_producir) || 0;
-      const detallesToSave = productosInsumos.map((pi) => {
-        return detalleRepo.create({
-          ordenProduccionId: savedOrden.id,
-          insumoId: pi.insumoId,
-          // cantidad_utilizada = cantidad_necesaria * cantidad_producir
-          cantidad_utilizada: Number(pi.cantidad_necesaria) * cantidadAProducir,
+        // 2) Cargar los insumos necesarios para el producto
+        const productosInsumos = await productoInsumoRepo.find({
+          where: { productoId: createOrdenProduccionDto.productoId },
         });
-      });
 
-      if (detallesToSave.length > 0) {
-        await detalleRepo.save(detallesToSave);
-      }
+        // 3) Crear detalles de orden de producción basados en la cantidad a producir
+        const cantidadAProducir =
+          Number(createOrdenProduccionDto.cantidad_producir) || 0;
+        const detallesToSave = productosInsumos.map((pi) => {
+          return detalleRepo.create({
+            ordenProduccionId: savedOrden.id,
+            insumoId: pi.insumoId,
+            // cantidad_utilizada = cantidad_necesaria * cantidad_producir
+            cantidad_utilizada:
+              Number(pi.cantidad_necesaria) * cantidadAProducir,
+          });
+        });
 
-      // 4) Devolver la orden con relaciones cargadas
-      return await ordenRepo.findOneOrFail({ where: { id: savedOrden.id }, relations: ['producto', 'detalles'] });
-    });
+        if (detallesToSave.length > 0) {
+          await detalleRepo.save(detallesToSave);
+        }
+
+        // 4) Devolver la orden con relaciones cargadas
+        return await ordenRepo.findOneOrFail({
+          where: { id: savedOrden.id },
+          relations: ['producto', 'detalles'],
+        });
+      },
+    );
   }
 
-  async update(id: number, updateOrdenProduccionDto: UpdateOrdenProduccionDto): Promise<OrdenProduccion> {
+  async update(
+    id: number,
+    updateOrdenProduccionDto: UpdateOrdenProduccionDto,
+  ): Promise<OrdenProduccion> {
     await this.ordenProduccionRepository.update(id, updateOrdenProduccionDto);
     const updatedOrden = await this.findOne(id);
     if (!updatedOrden) {
-      throw new NotFoundException(`Orden de producción con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Orden de producción con ID ${id} no encontrada`,
+      );
     }
     return updatedOrden;
   }
@@ -81,7 +103,9 @@ export class OrdenesProduccionService {
   async remove(id: number): Promise<void> {
     const result = await this.ordenProduccionRepository.delete(id);
     if (result.affected === 0) {
-      throw new NotFoundException(`Orden de producción con ID ${id} no encontrada`);
+      throw new NotFoundException(
+        `Orden de producción con ID ${id} no encontrada`,
+      );
     }
   }
 }

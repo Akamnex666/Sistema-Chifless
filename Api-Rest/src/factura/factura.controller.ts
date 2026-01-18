@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Delete, Put, ParseIntPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { FacturasService } from './factura.service';
 import { CreateFacturaDto } from './dto/create-factura.dto';
@@ -30,15 +39,20 @@ export class FacturasController {
     return factura;
   }
 
-
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateFacturaDto: UpdateFacturaDto,
   ): Promise<Factura> {
-    const facturaActualizada = await this.facturasService.update(id, updateFacturaDto);
+    const facturaActualizada = await this.facturasService.update(
+      id,
+      updateFacturaDto,
+    );
 
-    if (updateFacturaDto.estado_pago && updateFacturaDto.estado_pago === 'pagado') {
+    if (
+      updateFacturaDto.estado_pago &&
+      updateFacturaDto.estado_pago === 'pagado'
+    ) {
       await notifyWebSocket('invoice.paid', facturaActualizada);
     }
 

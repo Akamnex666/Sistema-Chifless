@@ -3,10 +3,10 @@ import * as jwt from 'jsonwebtoken';
 
 /**
  * Servicio para validar tokens JWT generados por el Auth-Service.
- * 
+ *
  * NOTA: Este servicio solo VALIDA tokens. La generación de tokens
  * es responsabilidad exclusiva del Auth-Service (microservicio).
- * 
+ *
  * Ambos servicios deben compartir el mismo JWT_SECRET.
  */
 @Injectable()
@@ -29,7 +29,9 @@ export class JwtAuthService {
    */
   verifyToken(token: string): JwtPayload {
     if (!this.jwtSecret) {
-      throw new UnauthorizedException('JWT_SECRET no configurada en el servidor');
+      throw new UnauthorizedException(
+        'JWT_SECRET no configurada en el servidor',
+      );
     }
 
     try {
@@ -37,7 +39,9 @@ export class JwtAuthService {
       return payload;
     } catch (err) {
       if (err instanceof jwt.TokenExpiredError) {
-        throw new UnauthorizedException('Token expirado. Por favor, renueve su sesión.');
+        throw new UnauthorizedException(
+          'Token expirado. Por favor, renueve su sesión.',
+        );
       }
       if (err instanceof jwt.JsonWebTokenError) {
         throw new UnauthorizedException('Token inválido');
@@ -51,10 +55,10 @@ export class JwtAuthService {
  * Estructura del payload JWT del Auth-Service
  */
 export interface JwtPayload {
-  sub: string;      // ID del usuario
-  email: string;    // Email del usuario
-  type: 'access' | 'refresh';  // Tipo de token
-  iat: number;      // Issued at (timestamp)
-  exp: number;      // Expiration (timestamp)
-  jti?: string;     // JWT ID (solo en refresh tokens)
+  sub: string; // ID del usuario
+  email: string; // Email del usuario
+  type: 'access' | 'refresh'; // Tipo de token
+  iat: number; // Issued at (timestamp)
+  exp: number; // Expiration (timestamp)
+  jti?: string; // JWT ID (solo en refresh tokens)
 }

@@ -20,9 +20,9 @@ export class Insumo {
   estado: string;
 
   // Relaciones
-  @OneToMany(() => ProductoInsumo, productoInsumo => productoInsumo.insumo)
+  @OneToMany(() => ProductoInsumo, (productoInsumo) => productoInsumo.insumo)
   productosInsumos: ProductoInsumo[];
 
-  @OneToMany(() => DetalleOrdenProduccion, detalle => detalle.insumo)
+  @OneToMany(() => DetalleOrdenProduccion, (detalle) => detalle.insumo)
   detallesOrdenProduccion: DetalleOrdenProduccion[];
 }

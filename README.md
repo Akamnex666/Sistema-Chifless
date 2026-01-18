@@ -1,5 +1,17 @@
 # Sistema-Chifles — Run & Dev Guide
 
+## 📢 Actualización: Implementación Punto 3 (IA & MCP)
+
+Si estás buscando cómo implementar el **AI Orchestrator, MCP Server y las extensiones Frontend**, por favor consulta la guía dedicada:
+👉 **[GUIA_IMPLEMENTACION_PUNTO_3.md](GUIA_IMPLEMENTACION_PUNTO_3.md)**
+
+Esta guía contiene los pasos detallados para:
+1. Crear el servicio de IA y configuración de MCP.
+2. Integrar Gemini/OpenAI mediante Strategy Pattern.
+3. Extender el Frontend con interfaz de Chat Multimodal.
+
+---
+
 Este README centraliza los pasos para levantar y probar todos los componentes del proyecto "Sistema-Chifles":
 - Api-Rest (NestJS con Postgres, Swagger)
 - Frontend (Next.js)

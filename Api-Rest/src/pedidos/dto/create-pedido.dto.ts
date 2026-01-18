@@ -1,4 +1,10 @@
-import { IsString, IsNumber, IsInt, ValidateNested, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsInt,
+  ValidateNested,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { CreateDetalleDto } from '../../detalles-pedido/dto/create-detalles-pedido.dto';
 
@@ -20,4 +26,3 @@ export class CreatePedidoDto {
   @Type(() => CreateDetalleDto)
   detalles: CreateDetalleDto[];
 }
-

@@ -23,11 +23,25 @@ export function usePedido(id: number) {
   });
 }
 
+// Tipo para crear pedido (sin IDs autogenerados)
+interface CreatePedidoInput {
+  fecha: string;
+  total: number;
+  estado: string;
+  clienteId: number;
+  detalles: {
+    productoId: number;
+    cantidad_solicitada: number;
+    precio_unitario: number;
+    subtotal: number;
+  }[];
+}
+
 export function useCreatePedido() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (pedido: Omit<Pedido, 'id'>) => {
+    mutationFn: async (pedido: CreatePedidoInput) => {
       const { data } = await apiClient.post('/pedidos', pedido);
       return data;
     },

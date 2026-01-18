@@ -5,9 +5,9 @@ import { DetallesOrdenProduccionController } from './detalles-orden-produccion.c
 import { DetalleOrdenProduccion } from './entities/detalles-orden-produccion.entity';
 
 @Module({
-	imports: [TypeOrmModule.forFeature([DetalleOrdenProduccion])],
-	controllers: [DetallesOrdenProduccionController],
-	providers: [DetallesOrdenProduccionService],
-	exports: [DetallesOrdenProduccionService],
+  imports: [TypeOrmModule.forFeature([DetalleOrdenProduccion])],
+  controllers: [DetallesOrdenProduccionController],
+  providers: [DetallesOrdenProduccionService],
+  exports: [DetallesOrdenProduccionService],
 })
 export class DetallesOrdenProduccionModule {}

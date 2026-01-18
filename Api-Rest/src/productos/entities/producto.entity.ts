@@ -27,12 +27,12 @@ export class Producto {
   estado: string;
 
   // Relaciones
-  @OneToMany(() => DetallePedido, detalle => detalle.producto)
+  @OneToMany(() => DetallePedido, (detalle) => detalle.producto)
   detallesPedido: DetallePedido[];
 
-  @OneToMany(() => ProductoInsumo, productoInsumo => productoInsumo.producto)
+  @OneToMany(() => ProductoInsumo, (productoInsumo) => productoInsumo.producto)
   productosInsumos: ProductoInsumo[];
 
-  @OneToMany(() => OrdenProduccion, orden => orden.producto)
+  @OneToMany(() => OrdenProduccion, (orden) => orden.producto)
   ordenesProduccion: OrdenProduccion[];
 }

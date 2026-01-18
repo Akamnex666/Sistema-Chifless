@@ -1,0 +1,64 @@
+name: E2E - AI Orchestrator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ai-orchestrator/**'
+      - '.github/workflows/e2e-ai-orchestrator.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ai-orchestrator/**'
+  workflow_dispatch:
+
+jobs:
+  e2e-test:
+    name: 🤖 AI Orchestrator E2E Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: ./ai-orchestrator
+        run: npm ci
+
+      - name: Build
+        working-directory: ./ai-orchestrator
+        run: npm run build
+
+      - name: Start service
+        working-directory: ./ai-orchestrator
+        run: |
+          npm run start:prod &
+          sleep 5
+        env:
+          NODE_ENV: test
+          PORT: 3002
+          GEMINI_API_KEY: test-key
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:3002 || exit 1
+          echo "✅ AI Orchestrator está corriendo"
+
+      - name: Run E2E tests
+        working-directory: ./ai-orchestrator
+        run: npm run test:e2e --if-present
+        env:
+          NODE_ENV: test
+          PORT: 3002
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🤖 AI Orchestrator E2E Tests" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ job.status == 'success' && '✅ Passed' || '❌ Failed' }}" >> $GITHUB_STEP_SUMMARY

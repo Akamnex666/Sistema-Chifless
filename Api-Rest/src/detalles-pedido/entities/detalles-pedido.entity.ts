@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 import { Pedido } from '../../pedidos/entities/pedido.entity';
 import { Producto } from '../../productos/entities/producto.entity';
 
@@ -23,11 +29,11 @@ export class DetallePedido {
   pedidoId: number;
 
   // Relaciones
-  @ManyToOne(() => Producto, producto => producto.detallesPedido)
+  @ManyToOne(() => Producto, (producto) => producto.detallesPedido)
   @JoinColumn({ name: 'productoId' })
   producto: Producto;
 
-  @ManyToOne(() => Pedido, pedido => pedido.detalles)
+  @ManyToOne(() => Pedido, (pedido) => pedido.detalles)
   @JoinColumn({ name: 'pedidoId' })
   pedido: Pedido;
 }

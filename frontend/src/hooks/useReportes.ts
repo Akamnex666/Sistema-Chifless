@@ -87,7 +87,7 @@ export function useReporteVentas(fechaInicio?: string, fechaFin?: string) {
         variables: { fechaInicio, fechaFin },
         fetchPolicy: 'network-only',
       });
-      return (data as any).reporteVentas;
+      return (data as { reporteVentas: ReporteVentas }).reporteVentas;
     },
   });
 }
@@ -101,7 +101,7 @@ export function useReporteProduccion(fechaInicio?: string, fechaFin?: string) {
         variables: { fechaInicio, fechaFin },
         fetchPolicy: 'network-only',
       });
-      return (data as any).reporteProduccion;
+      return (data as { reporteProduccion: ReporteProduccion }).reporteProduccion;
     },
   });
 }
@@ -114,7 +114,7 @@ export function useReporteInventario() {
         query: GET_REPORTE_INVENTARIO,
         fetchPolicy: 'network-only',
       });
-      return (data as any).reporteInventario;
+      return (data as { reporteInventario: ReporteInventario }).reporteInventario;
     },
   });
 }

@@ -1,14 +1,19 @@
 import { Controller, Get, HttpCode, HttpStatus, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Public } from './public.decorator';
 
 /**
  * Controlador de autenticación del API REST.
- * 
+ *
  * Este controlador proporciona:
  * - Información sobre el Auth-Service (público)
  * - Endpoint para verificar el usuario actual (protegido)
- * 
+ *
  * La autenticación real (login, registro, etc.) se maneja
  * en el microservicio Auth-Service.
  */
@@ -19,8 +24,8 @@ export class AuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Información del Auth Service (público)' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Retorna información sobre cómo autenticarse',
     schema: {
       example: {
@@ -64,8 +69,8 @@ export class AuthController {
   @ApiBearerAuth()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Obtener información del usuario autenticado' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: 'Retorna los datos del usuario del token JWT',
     schema: {
       example: {
@@ -77,14 +82,18 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Token no proporcionado o inválido' })
-  me(@Req() req: any) {
+  @ApiResponse({
+    status: 401,
+    description: 'Token no proporcionado o inválido',
+  })
+  me(@Req() req: Request & { user: import('./jwt-auth.service').JwtPayload }) {
+    const user = req.user;
     return {
-      userId: req.user.sub,
-      email: req.user.email,
-      tokenType: req.user.type,
-      issuedAt: new Date(req.user.iat * 1000).toISOString(),
-      expiresAt: new Date(req.user.exp * 1000).toISOString(),
+      userId: user.sub,
+      email: user.email,
+      tokenType: user.type,
+      issuedAt: new Date(user.iat * 1000).toISOString(),
+      expiresAt: new Date(user.exp * 1000).toISOString(),
     };
   }
 }

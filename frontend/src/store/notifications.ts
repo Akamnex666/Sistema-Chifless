@@ -50,7 +50,7 @@ export const useNotificationStore = create<NotificationStore>((set) => ({
 // Helper para convertir eventos WebSocket a notificaciones con mensaje legible
 export function createNotificationFromEvent(
   type: WebSocketEventType,
-  payload: any
+  payload: Record<string, unknown>
 ): NotificationMessage {
   const timestamp = new Date();
   const id = `${type}-${timestamp.getTime()}-${Math.random()}`;
@@ -202,6 +202,23 @@ export function createNotificationFromEvent(
       title = '🗑️ Factura Eliminada';
       message = `Se eliminó factura ${payload.numero_factura || '#?'}`;
       severity = 'warning';
+      break;
+
+    // AI Orchestrator
+    case 'order.created.ai':
+      title = '🤖 Pedido creado vía IA';
+      message = String(payload.mensaje || `Pedido #${payload.pedidoId || '?'} creado por el asistente`);
+      severity = 'success';
+      break;
+    case 'ai.tool.executed':
+      title = '🔧 Herramienta IA Ejecutada';
+      message = String(payload.mensaje || `Se ejecutó: ${payload.tool || 'herramienta'}`);
+      severity = 'info';
+      break;
+    case 'ai.analysis.completed':
+      title = '📊 Análisis IA Completado';
+      message = String(payload.mensaje || 'El asistente completó un análisis');
+      severity = 'success';
       break;
 
     default:
