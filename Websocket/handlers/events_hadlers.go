@@ -14,7 +14,7 @@ import (
 type IncomingEvent struct {
 	Type    string      `json:"type"`
 	Payload interface{} `json:"payload"`
-	Secret  string      `json:"secret,omitempty"` 
+	Secret  string      `json:"secret,omitempty"`
 }
 
 func NotifyEventHandler(h *hub.Hub) http.HandlerFunc {
