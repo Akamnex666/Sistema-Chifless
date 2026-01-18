@@ -5,6 +5,7 @@ import { Payment } from "../models/payment.entity";
 import { CreatePaymentDto, PaymentResponseDto } from "../models/payment.dto";
 import { PaymentAdapterFactory } from "../adapters/payment.adapter.factory";
 import { PaymentStatus } from "../providers/payment.provider";
+import { WebhookDispatcherService } from "../webhooks/webhook-dispatcher.service";
 import { Logger } from "../utils/logger";
 
 @Injectable()
@@ -14,6 +15,7 @@ export class PaymentService {
   constructor(
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
+    private webhookDispatcher: WebhookDispatcherService,
   ) {}
 
   /**
@@ -108,6 +110,24 @@ export class PaymentService {
       const updatedPayment = await this.paymentRepository.save(payment);
 
       this.logger.log(`Payment confirmed: ${transactionId}`);
+
+      // Dispatch webhook to partners
+      await this.webhookDispatcher
+        .dispatchEvent({
+          event_type: "payment.confirmed",
+          transaction_id: transactionId,
+          payload: {
+            paymentId: updatedPayment.id,
+            transactionId: updatedPayment.transactionId,
+            orderId: updatedPayment.orderId,
+            amount: updatedPayment.amount,
+            status: updatedPayment.status,
+            confirmedAt: new Date().toISOString(),
+          },
+        })
+        .catch((error) => {
+          this.logger.error("Failed to dispatch webhook", error);
+        });
 
       return this.mapToResponseDto(updatedPayment);
     } catch (error) {

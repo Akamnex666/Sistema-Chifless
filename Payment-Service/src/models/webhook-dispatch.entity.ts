@@ -5,44 +5,69 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  JoinColumn,
 } from "typeorm";
-import { Partner } from "./partner.entity";
+import { Partner } from "../partners/partner.entity";
+
+export enum WebhookStatus {
+  PENDING = "pending",
+  SUCCESS = "success",
+  FAILED = "failed",
+  RETRY = "retry",
+  EXHAUSTED = "exhausted",
+}
 
 @Entity("webhook_dispatches")
 export class WebhookDispatch {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column("uuid")
-  partnerId: string;
+  @Column({ type: "uuid" })
+  partner_id: string;
 
-  @ManyToOne(() => Partner)
+  @ManyToOne(() => Partner, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "partner_id" })
   partner: Partner;
 
-  @Column("varchar", { length: 255 })
-  eventType: string;
+  @Column({ type: "varchar", length: 255 })
+  event_type: string;
 
-  @Column("varchar", { length: 255 })
-  transactionId: string;
+  @Column({ type: "varchar", length: 255, nullable: true })
+  transaction_id: string;
 
-  @Column("jsonb")
+  @Column({ type: "jsonb" })
   payload: Record<string, any>;
 
-  @Column("varchar", { length: 50 })
-  status: string; // pending, sent, failed, retrying, exhausted
+  @Column({ type: "text" })
+  webhook_url: string;
 
-  @Column("integer", { default: 0 })
-  attemptCount: number;
+  @Column({ type: "text", nullable: true })
+  signature: string;
 
-  @Column("text", { nullable: true })
-  lastError: string;
+  @Column({ type: "varchar", length: 50, default: "pending" })
+  status: WebhookStatus;
+
+  @Column({ type: "integer", default: 0 })
+  attempt_count: number;
+
+  @Column({ type: "integer", default: 3 })
+  max_attempts: number;
+
+  @Column({ type: "integer", nullable: true })
+  http_status_code: number;
+
+  @Column({ type: "text", nullable: true })
+  last_error: string;
+
+  @Column({ type: "timestamp", nullable: true })
+  last_attempt_at: Date;
+
+  @Column({ type: "timestamp", nullable: true })
+  next_retry_at: Date;
 
   @CreateDateColumn()
-  createdAt: Date;
+  created_at: Date;
 
   @UpdateDateColumn()
-  updatedAt: Date;
-
-  @Column("timestamp", { nullable: true })
-  nextRetryAt: Date;
+  updated_at: Date;
 }
