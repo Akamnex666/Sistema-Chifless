@@ -6,6 +6,7 @@ import { AppService } from "./app.service";
 import { PaymentsModule } from "./payments/payment.module";
 import { PartnerModule } from "./partners/partner.module";
 import { WebhookModule } from "./webhooks/webhook.module";
+import { WebSocketModule } from "./websockets/websocket.module";
 import { Payment } from "./models/payment.entity";
 import { Partner } from "./partners/partner.entity";
 import { WebhookDispatch } from "./models/webhook-dispatch.entity";
@@ -29,6 +30,7 @@ import { WebhookDispatch } from "./models/webhook-dispatch.entity";
     PaymentsModule,
     PartnerModule,
     WebhookModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
