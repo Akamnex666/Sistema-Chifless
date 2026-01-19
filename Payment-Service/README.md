@@ -117,15 +117,61 @@ Microservicio de procesamiento de pagos con soporte de webhooks bidireccionales,
 
 ### 11. Configuración de entorno (Tarea 22)
 
-**Archivos:** `.env.example`
+**Archivos:** `.env`
 
-- Variables de BD PostgreSQL
-- Configuración de proveedores de pago
-- Credenciales Stripe (opcional)
+- Variables de BD PostgreSQL sincronizadas con Api-Rest y Auth-Service
+- Configuración de proveedores de pago (Mock, Stripe)
 - Configuración de webhooks (timeout, reintentos, exponential backoff)
-- JWT y seguridad
-- Logging y monitoring
+- JWT_SECRET compartido con Api-Rest y Auth-Service
+- WEBSOCKET_SECRET compartido con servidor Go
 - URLs de servicios externos
+
+### 12. Integración final end-to-end (Tarea 23)
+
+**Archivos:** `src/payments/payment.service.ts`, `src/payments/payment.module.ts`
+
+- **PaymentService mejorado:**
+  - Método `confirmPayment()` ahora coordina:
+    1. Normaliza evento con `PaymentEvent.fromMockAdapter()`
+    2. Dispara webhook dispatcher (envía a partners con HMAC)
+    3. Emite notificación WebSocket via `PaymentGateway.notifyPaymentConfirmed()`
+    4. Manejo de errores con notificaciones WebSocket
+  - Método `refundPayment()` también emite notificaciones WebSocket
+- **PaymentsModule:**
+  - Importa WebSocketModule y WebhookModule
+  - Inyecta PaymentGateway en PaymentService
+- **Flujo completo:**
+  - Cliente hace pedido → Api-Rest crea pago
+  - Payment-Service confirma → normaliza evento → dispara webhooks → notifica clientes WebSocket
+  - Partners reciben webhook → verifican HMAC → procesan evento
+
+### 13. Testing E2E y Bugfixes (Tarea 24)
+
+**Archivos:** `payment.e2e.spec.ts`, `TASK_24_E2E_TESTING.md`
+
+- **E2E Test Suite (20 tests):**
+  - Payment Creation Flow: validar creación y rechazo de datos inválidos
+  - Payment Confirmation Flow: confirmar pago y validar dispatch de webhooks
+  - Payment Retrieval: obtener por ID y transaction ID
+  - Refund Flow: reembolsos totales y parciales
+  - PaymentEvent Normalization: estructura de eventos normalizada
+  - Error Handling: edge cases (campos faltantes, confirmaciones concurrentes, montos grandes)
+  - WebSocket Integration: notificaciones en confirmación y refund
+  - Data Persistence: integridad de datos tras operaciones
+
+- **10 Bugfixes Documentados y Aplicados:**
+  1. ✅ HMAC timing-safe verification (contra timing attacks)
+  2. ✅ Webhook retry con exponential backoff
+  3. ✅ Transaction ID uniqueness (UUID v4 + timestamp)
+  4. ✅ Payment status transitions validation
+  5. ✅ Race condition en confirmación concurrente
+  6. ✅ Metadata validation
+  7. ✅ Database connection pool management
+  8. ✅ WebSocket error handling
+  9. ⚠️ Database migration strategy (opcional)
+  10. ✅ Input sanitization (class-validator)
+
+- **Build Status:** ✅ npm run build successful (0 errors)
 
 ## Flujo de un pago confirmado
 
@@ -215,15 +261,14 @@ src/
 - [PARTNER_INTEGRATION.md](PARTNER_INTEGRATION.md) - Guía completa de integración
 - [TESTING_WEBHOOKS.md](TESTING_WEBHOOKS.md) - Tests bidireccionales locales
 - [WEBHOOK_RECEIVER_DOCS.md](WEBHOOK_RECEIVER_DOCS.md) - API de webhooks entrantes
+- [TASK_24_E2E_TESTING.md](TASK_24_E2E_TESTING.md) - E2E tests y bugfixes
 - [.env.example](.env.example) - Variables de entorno completas
 
-## Próximas tareas (13-24)
+## Próximas tareas (15-24)
 
 **Código NestJS:**
 
 - Task 4: StripeAdapter (opcional)
-- Task 23: Integración final (Payment → Api-Rest → WebSocket)
-- Task 24: Testing e2e y bugfixes
 
 **n8n (workflow visual):**
 
@@ -237,6 +282,8 @@ src/
 - Task 19: Exportar workflows n8n
 - Task 20: README final
 - Task 21: Integración con otros servicios
+
+**Status:** ✅ Tasks 1-12 completadas | ✅ Task 23 completada | ✅ Task 24 completada
 
 ## Endpoints Disponibles
 
