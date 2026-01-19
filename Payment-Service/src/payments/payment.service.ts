@@ -5,6 +5,9 @@ import { Payment } from "../models/payment.entity";
 import { CreatePaymentDto, PaymentResponseDto } from "../models/payment.dto";
 import { PaymentAdapterFactory } from "../adapters/payment.adapter.factory";
 import { PaymentStatus } from "../providers/payment.provider";
+import { PaymentEvent, PaymentEventType } from "../models/payment-event.model";
+import { WebhookDispatcherService } from "../webhooks/webhook-dispatcher.service";
+import { PaymentGateway } from "../websockets/payment.gateway";
 import { Logger } from "../utils/logger";
 
 @Injectable()
@@ -14,6 +17,8 @@ export class PaymentService {
   constructor(
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
+    private webhookDispatcher: WebhookDispatcherService,
+    private paymentGateway: PaymentGateway,
   ) {}
 
   /**
@@ -70,6 +75,7 @@ export class PaymentService {
 
   /**
    * Confirm a payment
+   * Triggers: webhook dispatch to partners + WebSocket notifications
    * @param transactionId Transaction ID to confirm
    * @param metadata Additional metadata
    * @returns Confirmed payment object
@@ -108,6 +114,49 @@ export class PaymentService {
       const updatedPayment = await this.paymentRepository.save(payment);
 
       this.logger.log(`Payment confirmed: ${transactionId}`);
+
+      // === INTEGRATION: Create normalized PaymentEvent ===
+      const paymentEvent = PaymentEvent.fromMockAdapter({
+        paymentId: updatedPayment.id,
+        transactionId: updatedPayment.transactionId,
+        amount: updatedPayment.amount,
+        currency: updatedPayment.currency,
+        status: updatedPayment.status,
+        timestamp: new Date(),
+        metadata: {
+          orderId: updatedPayment.orderId,
+          ...updatedPayment.metadata,
+        },
+      });
+
+      // === INTEGRATION: Dispatch webhook to partners ===
+      await this.webhookDispatcher
+        .dispatchEvent({
+          event_type: "payment.confirmed",
+          transaction_id: transactionId,
+          payload: paymentEvent.toJSON(),
+        })
+        .catch((error) => {
+          this.logger.error("Failed to dispatch webhook", error);
+          // Emit error notification via WebSocket
+          this.paymentGateway.notifyStatusUpdate({
+            type: "webhook_dispatch_error",
+            message: `Failed to dispatch payment confirmed webhook for transaction ${transactionId}`,
+            level: "error",
+            metadata: { transactionId, error: error.message },
+          });
+        });
+
+      // === INTEGRATION: Notify via WebSocket ===
+      this.paymentGateway.notifyPaymentConfirmed({
+        paymentId: updatedPayment.id,
+        transactionId: updatedPayment.transactionId,
+        amount: updatedPayment.amount,
+        currency: updatedPayment.currency,
+        orderId: updatedPayment.orderId,
+        customerId: updatedPayment.metadata?.customerId,
+        timestamp: new Date(),
+      });
 
       return this.mapToResponseDto(updatedPayment);
     } catch (error) {
@@ -203,6 +252,18 @@ export class PaymentService {
       const updatedPayment = await this.paymentRepository.save(payment);
 
       this.logger.log(`Payment refunded: ${transactionId}`);
+
+      // === INTEGRATION: Notify via WebSocket ===
+      this.paymentGateway.notifyStatusUpdate({
+        type: "payment_refunded",
+        message: `Payment refunded: ${transactionId}`,
+        level: "info",
+        metadata: {
+          transactionId,
+          refundedAmount: amount || payment.amount,
+          orderId: updatedPayment.orderId,
+        },
+      });
 
       return this.mapToResponseDto(updatedPayment);
     } catch (error) {

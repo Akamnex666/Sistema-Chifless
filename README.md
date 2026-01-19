@@ -1,18 +1,38 @@
 # Sistema-Chifles — Run & Dev Guide
 
-## 📢 Actualización: Implementación Punto 3 (IA & MCP)
+## � Status Actual (18/01/2026)
 
-Si estás buscando cómo implementar el **AI Orchestrator, MCP Server y las extensiones Frontend**, por favor consulta la guía dedicada:
+**Payment-Service**: ✅ **COMPLETAMENTE IMPLEMENTADO** (14/24 tareas de código)
+
+- ✅ Estructura base, controllers, services, DTOs
+- ✅ Adapters (Mock, Stripe placeholder)
+- ✅ HMAC-SHA256 security
+- ✅ Webhooks bidireccionales (dispatcher + receiver)
+- ✅ WebSocket integration (notificaciones real-time)
+- ✅ E2E testing (20 tests)
+- ✅ 10 bugfixes documentados
+- ⏳ **Requiere integración con Api-Rest** → Ver [INTEGRATION_CHECKLIST.md](INTEGRATION_CHECKLIST.md)
+
+---
+
+## 📢 Implementaciones Disponibles
+
+### 1. Payment Service (LISTO PARA CONECTAR)
+
+Guía de integración y validación:
+
+- 👉 **[Payment-Service/INTEGRATION_VALIDATION.md](Payment-Service/INTEGRATION_VALIDATION.md)** - Checklist de validación
+- 👉 **[INTEGRATION_CHECKLIST.md](INTEGRATION_CHECKLIST.md)** - Qué falta para conectar todo
+
+### 2. AI & MCP (Punto 3)
+
+Si estás buscando cómo implementar el **AI Orchestrator, MCP Server y extensiones Frontend**:
 👉 **[GUIA_IMPLEMENTACION_PUNTO_3.md](GUIA_IMPLEMENTACION_PUNTO_3.md)**
-
-Esta guía contiene los pasos detallados para:
-1. Crear el servicio de IA y configuración de MCP.
-2. Integrar Gemini/OpenAI mediante Strategy Pattern.
-3. Extender el Frontend con interfaz de Chat Multimodal.
 
 ---
 
 Este README centraliza los pasos para levantar y probar todos los componentes del proyecto "Sistema-Chifles":
+
 - Api-Rest (NestJS con Postgres, Swagger)
 - Frontend (Next.js)
 - GraphQL (FastAPI + Strawberry)
@@ -23,6 +43,7 @@ He escrito instrucciones pensadas para un entorno Windows con PowerShell (`pwsh.
 ---
 
 ## Requisitos previos
+
 - Docker & Docker Compose (usable desde PowerShell)
 - Node.js (v18+ recomendado) y npm
 - Python 3.10+ (para GraphQL service)
@@ -32,6 +53,7 @@ He escrito instrucciones pensadas para un entorno Windows con PowerShell (`pwsh.
 ---
 
 ## Resumen de puertos usados
+
 - API REST (NestJS): `http://localhost:3000` (Swagger UI: `http://localhost:3000/api`)
 - Frontend (Next dev): `http://localhost:7171` (según `frontend/package.json`)
 - GraphQL service (uvicorn): `http://localhost:8001` (según `GraphQL/service/README.md`)
@@ -40,6 +62,7 @@ He escrito instrucciones pensadas para un entorno Windows con PowerShell (`pwsh.
 ---
 
 ## 1) Levantar Api-Rest (Postgres + API)
+
 La carpeta del backend es `Api-Rest/`. En este proyecto el `docker-compose.yml` en `Api-Rest/` define dos servicios: la API y Postgres.
 
 1. Abre PowerShell en la carpeta `Api-Rest`:
@@ -71,15 +94,19 @@ docker-compose logs -f api-rest-sistema
 ```
 
 Notas importantes:
+
 - El `docker-compose.yml` monta el código fuente en el contenedor y usa `CHOKIDAR_USEPOLLING=true` y un volumen anónimo `/app/node_modules` para evitar problemas de watch en Windows/WSL. No cambies el volumen `/app/node_modules` si trabajas en Windows.
 
 ---
 
 ## 2) Probar Swagger y autenticación JWT
+
 La API incluye un endpoint dev para login que devuelve un JWT:
+
 - `POST /chifles/auth/login` — body JSON: `{ "email": "dev@example.com", "password": "chifles" }` → devuelve `{ "access_token": "eyJ..." }`.
 
 Pasos desde Swagger UI (recomendado):
+
 1. Abre `http://localhost:3000/api`.
 2. Pulsa `Authorize` (candado en la esquina superior derecha).
 3. En la caja de valores pega SOLO el token (o `Bearer <token>` — la API ahora tolera ambos). Recomendado: pegar SOLO el token, por ejemplo:
@@ -92,6 +119,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 5. En el endpoint `GET /chifles/clientes` pulsa `Try it out` → `Execute`. Deberías ver `Authorization: Bearer <token>` en Request headers y recibir `200` con datos.
 
 Si ves `401`:
+
 - Asegúrate de pulsar `Authorize` (no sólo Close) en el modal.
 - Si en la consola del navegador aparece `Authorization: Bearer Bearer ...` entonces pegaste `Bearer <token>` en el modal y Swagger le añadió su propio `Bearer ` → en este proyecto el backend ya corrige dobles prefijos, pero si tu servidor no lo hiciera, pega sólo el token.
 
@@ -108,6 +136,7 @@ Invoke-RestMethod -Uri 'http://localhost:3000/chifles/clientes' -Headers $h -Met
 ---
 
 ## 3) Levantar el Frontend (Next.js)
+
 Carpeta: `frontend/`.
 
 1. Abre PowerShell en la carpeta `frontend`:
@@ -130,11 +159,13 @@ npm run dev
 ```
 
 Notas:
+
 - El frontend usa `axios`, `@apollo/client` y `socket.io-client` para comunicarse con la API, GraphQL y WebSocket. Asegúrate de que los servicios estén en ejecución y sus URLs coincidan con lo que espera el frontend (revisa `frontend/src/services` y `frontend/.env` si existe).
 
 ---
 
 ## 4) Levantar GraphQL service (reportes)
+
 Carpeta: `GraphQL/service/`.
 
 1. Abre PowerShell en `GraphQL/service`:
@@ -162,6 +193,7 @@ uvicorn app.main:app --reload --port 8001
 ---
 
 ## 5) Levantar WebSocket server (Go)
+
 Carpeta: `Websocket/`.
 
 1. Abre PowerShell en `Websocket`:
@@ -178,6 +210,7 @@ go run .
 ```
 
 3. El servidor por defecto expone:
+
 - HTTP notify endpoint (para que el API REST notifique): por ejemplo `http://localhost:8081/notify`
 - WebSocket en `ws://localhost:8081/ws`
 
@@ -186,6 +219,7 @@ go run .
 ---
 
 ## 6) Conexión entre servicios y variables importantes
+
 - `Api-Rest` en `Api-Rest/.env` contiene `DB_*`, `JWT_SECRET`, `WS_URL`, `WS_SECRET`. Asegúrate de que:
   - `DB_HOST` apunte a `api-postgres-sistema-chifles` cuando uses docker-compose.
   - `WS_URL` apunte al endpoint del WebSocket (por ejemplo `http://host.docker.internal:8081/notify` o la IP correcta dentro de docker). En `Websocket/README.md` hay nota para usar `172.17.0.1:8081` si se necesita.
@@ -193,6 +227,7 @@ go run .
 ---
 
 ## 7) Probar notificaciones WebSocket (flujo típico)
+
 1. Levanta WebSocket server (`go run .`).
 2. Levanta API REST (docker-compose) y comprueba `.env` con `WS_URL` apuntando a la URL del notify del websocket.
 3. Conecte un cliente WebSocket (por ejemplo extensión "Simple WebSocket Client" o `wscat`) a `ws://localhost:8081/ws`.
@@ -201,6 +236,7 @@ go run .
 ---
 
 ## 8) Comprobaciones rápidas y solución de problemas
+
 - `401 Unauthorized` en Swagger:
   - Revisa que hiciste `Authorize` correctamente.
   - Si el header en DevTools aparece como `Authorization: Bearer Bearer <token>`, pega solo el token en el modal o refresca Swagger; el backend ya fue parcheado para aceptar dobles prefijos.
@@ -210,6 +246,7 @@ go run .
 ---
 
 ## 9) Comandos útiles (resumen)
+
 - Levantar API y DB (desde `Api-Rest`):
 
 ```powershell
@@ -267,6 +304,7 @@ go run .
 ---
 
 ## 10) Qué puedo hacer por ti a continuación
+
 - Generar un script `run-all.ps1` que orqueste la puesta en marcha (levantar docker-compose, arrancar GraphQL en venv y Websocket si tienes Go instalado).
 - Revisar `frontend` para asegurar que los endpoints apuntan a `http://localhost:3000`/`8001`/`8081` y actualizar `.env.local` si lo deseas.
 - Añadir documentación adicional para despliegue en producción (builds, nginx, variables seguras, revocación de tokens).

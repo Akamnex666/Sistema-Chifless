@@ -1,0 +1,90 @@
+version: "3.8"
+
+services:
+  # n8n - Automation Platform
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-workflow
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_TUNNEL_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires
+
+      # Database PostgreSQL (servicio en esta composición)
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=zhali
+      - DB_POSTGRESDB_PASSWORD=Holaquehace
+      - DB_POSTGRESDB_SSL_ENABLED=false
+
+      # Credenciales por defecto (cambiar en producción)
+      - N8N_DEFAULT_USER_EMAIL=admin@example.com
+      - N8N_DEFAULT_USER_PASSWORD=password123
+      - N8N_USER_MANAGEMENT_DISABLED=true
+
+      # External hooks para integrarse con Payment Service
+      - WEBHOOK_URL=http://localhost:5678/
+      - EXTERNAL_HOOK_URLS=
+
+      # Logging
+      - LOG_LEVEL=info
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/data/n8n-workflows
+
+    networks:
+      - chifles-network
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5678/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    depends_on:
+      - postgres
+
+  # PostgreSQL - Shared Database for n8n
+  postgres:
+    image: postgres:15-alpine
+    container_name: n8n-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-zhali}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Holaquehace}
+      POSTGRES_DB: ${DB_NAME:-n8n}
+
+    ports:
+      - "5435:5432" # Puerto diferente al del Api-Rest para evitar conflicto
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - chifles-network
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-zhali}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  n8n_data:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  chifles-network:
+    driver: bridge

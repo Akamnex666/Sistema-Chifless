@@ -4,7 +4,12 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { PaymentsModule } from "./payments/payment.module";
+import { PartnerModule } from "./partners/partner.module";
+import { WebhookModule } from "./webhooks/webhook.module";
+import { WebSocketModule } from "./websockets/websocket.module";
 import { Payment } from "./models/payment.entity";
+import { Partner } from "./partners/partner.entity";
+import { WebhookDispatch } from "./models/webhook-dispatch.entity";
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -20,9 +25,12 @@ import { Payment } from "./models/payment.entity";
       database: process.env.DATABASE_NAME || "sistema-chifles",
       synchronize: true,
       logging: false,
-      entities: [Payment],
+      entities: [Payment, Partner, WebhookDispatch],
     }),
     PaymentsModule,
+    PartnerModule,
+    WebhookModule,
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],
