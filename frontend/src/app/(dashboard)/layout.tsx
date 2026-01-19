@@ -4,6 +4,7 @@ import React from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import AuthGate from '@/components/AuthGate';
+import { ChatbotFloating } from '@/components/chat';
 
 export default function DashboardLayout({
   children,
@@ -22,6 +23,7 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
+      <ChatbotFloating />
     </>
   );
 }
