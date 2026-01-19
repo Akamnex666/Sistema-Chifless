@@ -1,10 +1,5 @@
 /**
  * Módulo de Autenticación - Exports públicos
- *
- * Uso:
- * ```typescript
- * import { Public, CurrentUser, JwtPayload } from './auth';
- * ```
  */
 
 export { AuthModule } from './auth.module';
