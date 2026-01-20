@@ -1,0 +1,29 @@
+services:
+  ai-orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-orchestrator
+    command: npm run start:dev
+    ports:
+      - "3003:3003"
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    working_dir: /app
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - sistema-chifless-network
+
+networks:
+  sistema-chifless-network:
+    driver: bridge

@@ -1,0 +1,26 @@
+services:
+  frontend-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_REST_URL=${NEXT_PUBLIC_API_REST_URL:-http://localhost:3000}
+        - NEXT_PUBLIC_AUTH_SERVICE_URL=${NEXT_PUBLIC_AUTH_SERVICE_URL:-http://localhost:3001}
+        - NEXT_PUBLIC_GRAPHQL_URL=${NEXT_PUBLIC_GRAPHQL_URL:-http://localhost:8000/graphql}
+        - NEXT_PUBLIC_WEBSOCKET_URL=${NEXT_PUBLIC_WEBSOCKET_URL:-ws://localhost:8080/ws}
+    container_name: frontend-service
+    ports:
+      - "7171:7171"
+    environment:
+      - NODE_ENV=production
+      - PORT=7171
+      - HOSTNAME=0.0.0.0
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - sistema-chifless-network
+
+networks:
+  sistema-chifless-network:
+    driver: bridge

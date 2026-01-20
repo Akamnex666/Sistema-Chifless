@@ -35,7 +35,7 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 nestjs
 
-# Copiar dependencias
+# Copiar dependencias de producción
 COPY --from=deps /app/node_modules ./node_modules
 
 # Copiar build
@@ -47,8 +47,12 @@ RUN chown -R nestjs:nodejs /app
 
 USER nestjs
 
-EXPOSE 3000
+EXPOSE 3003
 
-ENV PORT=3000
+ENV PORT=3003
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3003/api/health || exit 1
 
 CMD ["node", "dist/main.js"]
