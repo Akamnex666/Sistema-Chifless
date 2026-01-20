@@ -1,0 +1,28 @@
+services:
+  payment-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: payment-service
+    command: npm run start:dev
+    ports:
+      - "3002:3002"
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - CHOKIDAR_INTERVAL=1000
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    working_dir: /app
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - sistema-chifless-network
+
+networks:
+  sistema-chifless-network:
+    driver: bridge
