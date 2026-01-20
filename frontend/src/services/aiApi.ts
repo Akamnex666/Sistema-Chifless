@@ -1,4 +1,5 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import authService from './authService';
 
 const aiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_AI_ORCHESTRATOR_URL || 'http://localhost:3003/api',
@@ -6,6 +7,24 @@ const aiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Variable para evitar múltiples refresh simultáneos
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: Error) => void;
+}> = [];
+
+const processQueue = (error: Error | null, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
 
 // Interceptor para añadir Authorization desde localStorage
 aiClient.interceptors.request.use(
@@ -23,6 +42,80 @@ aiClient.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error),
+);
+
+// Interceptor para auto-refresh de token en errores 401
+aiClient.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+    
+    if (!error.response) {
+      return Promise.reject(error);
+    }
+    
+    const status = error.response?.status;
+    
+    if (status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      const { refreshToken } = authService.getTokens();
+      
+      if (!refreshToken) {
+        authService.clearTokens();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
+      }
+      
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            }
+            return aiClient(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+      
+      isRefreshing = true;
+      
+      try {
+        const refreshResponse = await authService.refresh(refreshToken);
+        const newAccessToken = refreshResponse.accessToken;
+        
+        authService.saveTokens({
+          accessToken: newAccessToken,
+          refreshToken: refreshToken,
+          accessExpiresIn: refreshResponse.expiresIn,
+          refreshExpiresIn: 604800000,
+        });
+        
+        processQueue(null, newAccessToken);
+        
+        if (originalRequest.headers) {
+          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+        }
+        
+        return aiClient(originalRequest);
+      } catch (refreshError) {
+        processQueue(refreshError as Error, null);
+        authService.clearTokens();
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+    
+    return Promise.reject(error);
+  }
 );
 
 export interface ChatMessage {
