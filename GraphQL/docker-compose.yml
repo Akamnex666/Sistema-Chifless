@@ -14,6 +14,9 @@ services:
       - PORT=8000
       # URL del API REST (ajustar según tu configuración)
       - API_REST_URL=http://host.docker.internal:3000
+      # Permitir peticiones desde el frontend de desarrollo
+      - FRONTEND_ORIGIN=http://localhost:3000
+      - ALLOW_REMOTE_POSTS=1
     volumes:
       # Para desarrollo: monta el código fuente
       - ./app:/app/app
