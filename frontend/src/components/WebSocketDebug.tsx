@@ -19,7 +19,7 @@ export function WebSocketDebug() {
       </div>
       <div className="space-y-1">
         <div>Estado: {isConnected ? '✓ Conectado' : '✗ Desconectado'}</div>
-        <div>URL: {process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8081/ws'}</div>
+        <div>URL: {process.env.NEXT_PUBLIC_WEBSOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/ws'}</div>
         <div>Notificaciones: {notifications.length}</div>
         {notifications.length > 0 && (
           <div className="mt-2 pt-2 border-t border-gray-700">

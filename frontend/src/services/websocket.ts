@@ -24,7 +24,7 @@ class WebSocketService {
     }
     this.connecting = true;
 
-    this.url = (process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8081/ws');
+    this.url = (process.env.NEXT_PUBLIC_WEBSOCKET_URL || process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8080/ws');
 
     // Normalize the URL so it always targets the WebSocket endpoint '/ws'
     try {
@@ -33,7 +33,7 @@ class WebSocketService {
         this.url = this.url.replace(/\/+$/, '') + '/ws';
       }
     } catch {
-      this.url = 'ws://localhost:8081/ws';
+      this.url = 'ws://localhost:8080/ws';
     }
 
     // Añadir token como query param si existe en localStorage (navegador)
