@@ -1,4 +1,4 @@
-import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, Observable, FetchResult } from '@apollo/client';
+import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, Observable, FetchResult, CombinedGraphQLErrors } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 import { onError } from '@apollo/client/link/error';
 import authService from './authService';
@@ -22,10 +22,11 @@ const resolvePendingRequests = () => {
   pendingRequests = [];
 };
 
-// Error link para manejar errores de autenticación
-const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) => {
-  if (graphQLErrors) {
-    for (const err of graphQLErrors) {
+// Error link para manejar errores de autenticación (Apollo Client 4.x API)
+const errorLink = onError(({ error, operation, forward }) => {
+  // Verificar si es un error GraphQL usando CombinedGraphQLErrors
+  if (CombinedGraphQLErrors.is(error)) {
+    for (const err of error.errors) {
       // Detectar errores de autenticación
       if (err.extensions?.code === 'UNAUTHENTICATED' || 
           err.message.includes('401') || 
@@ -86,8 +87,8 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
               const subscriber = forward(operation).subscribe(observer);
               return () => subscriber.unsubscribe();
             })
-            .catch((error) => {
-              console.error('[GraphQL] Error renovando token:', error);
+            .catch((refreshError) => {
+              console.error('[GraphQL] Error renovando token:', refreshError);
               isRefreshing = false;
               pendingRequests = [];
               
@@ -96,15 +97,14 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
                 window.location.href = '/login';
               }
               
-              observer.error(error);
+              observer.error(refreshError);
             });
         });
       }
     }
-  }
-
-  if (networkError) {
-    console.error('[GraphQL] Network error:', networkError);
+  } else {
+    // Network error u otro tipo de error
+    console.error('[GraphQL] Error:', error);
   }
 });
 
@@ -121,7 +121,7 @@ const authLink = setContext((_, { headers }) => {
 });
 
 // URL del servidor GraphQL
-const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8001/graphql';
+const GRAPHQL_URL = process.env.NEXT_PUBLIC_GRAPHQL_URL || 'http://localhost:8000/graphql';
 
 const httpLink = new HttpLink({ 
   uri: GRAPHQL_URL,
