@@ -1,0 +1,24 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package.json package-lock.json* ./
+
+# Instalar dependencias (incluyendo devDependencies)
+RUN npm ci
+
+# Copiar el código fuente
+COPY . .
+
+# Crear usuario no-root
+RUN addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 nestjs \
+    && chown -R nestjs:nodejs /app
+
+USER nestjs
+
+EXPOSE 3000
+
+# Comando por defecto para desarrollo
+CMD ["npm", "run", "start:dev"]
