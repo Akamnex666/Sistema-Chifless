@@ -18,6 +18,7 @@ import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 
 import { notifyWebSocket } from '../utils/notify-ws';
+import { Public } from '../auth/public.decorator';
 
 @ApiBearerAuth()
 @Controller('clientes')
@@ -26,16 +27,19 @@ export class ClientesController {
 
   constructor(private readonly clientesService: ClientesService) {}
 
+  @Public()
   @Get()
   findAll() {
     return this.clientesService.findAll();
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.clientesService.findOne(id);
   }
 
+  @Public()
   @Post()
   async create(@Body() body: CreateClienteDto) {
     const nuevoCliente = await this.clientesService.create(body);

@@ -14,12 +14,14 @@ import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { Producto } from './entities/producto.entity';
 import { notifyWebSocket } from '../utils/notify-ws';
+import { Public } from '../auth/public.decorator';
 
 @ApiBearerAuth()
 @Controller('productos')
 export class ProductosController {
   constructor(private readonly productosService: ProductosService) {}
 
+  @Public()
   @Get()
   findAll(): Promise<Producto[]> {
     return this.productosService.findAll();

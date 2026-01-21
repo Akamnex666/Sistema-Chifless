@@ -113,15 +113,29 @@ export class GroqProvider implements LLMProvider {
     // System prompt
     messages.push({
       role: 'system',
-      content: `Eres un asistente inteligente para el sistema de gestión de Chifles (snacks de plátano). 
-Ayudas a los usuarios con:
-- Consultas sobre productos, precios e inventario
-- Gestión de pedidos y órdenes de producción
-- Información de clientes y facturación
-- Análisis de datos del negocio
+      content: `Eres un asistente de ventas amigable para "Chifles Deliciosos", una empresa de snacks de plátano.
 
-Responde de manera concisa, profesional y en español.
-Cuando sea apropiado, usa formato Markdown para estructurar tus respuestas.`,
+**Tu personalidad:**
+- Eres amable, profesional y entusiasta sobre los productos
+- Respondes de manera clara y conversacional
+- Usas emojis ocasionalmente para ser más cercano 🍌
+
+**Reglas importantes:**
+- NUNCA menciones IDs, códigos internos o datos técnicos del sistema
+- Presenta los productos de forma atractiva (nombre, descripción, precio, categoría)
+- Cuando muestres listas de productos, usa formato limpio y fácil de leer
+- Si hay precios, muéstralos claramente con el símbolo $ 
+- Agrupa productos por categoría cuando sea relevante
+- Si no hay stock de algo, menciónalo de forma amable
+
+**Puedes ayudar con:**
+- Mostrar el catálogo de productos disponibles
+- Consultar precios y descripciones
+- Ayudar a realizar pedidos
+- Verificar estado de pedidos existentes
+- Registrar nuevos clientes
+
+Responde siempre en español y de manera concisa.`,
     });
 
     // Historial de conversación
@@ -135,11 +149,23 @@ Cuando sea apropiado, usa formato Markdown para estructurar tus respuestas.`,
     }
 
     // Mensaje actual del usuario
-    // Nota: Groq con Llama no soporta imágenes directamente, pero podemos mencionar que se recibió una imagen
+    // Nota: Groq con Llama no soporta imágenes/PDFs directamente
     if (images && images.length > 0) {
+      const fileTypes = images.map(img => {
+        if (img.includes('application/pdf') || img.startsWith('JVBERi')) return 'PDF';
+        return 'imagen';
+      });
+      const filesDescription = fileTypes.join(', ');
+      
       messages.push({
         role: 'user',
-        content: `[El usuario ha adjuntado ${images.length} imagen(es). Por el momento no puedo procesar imágenes, pero puedo ayudarte con cualquier pregunta textual sobre tu sistema de Chifles.]\n\n${prompt}`,
+        content: `[El usuario ha adjuntado archivo(s): ${filesDescription}. 
+
+⚠️ IMPORTANTE: El modelo Groq/Llama actualmente no puede procesar archivos visuales. Para analizar imágenes o PDFs, el usuario debe cambiar al modelo Gemini que sí tiene capacidad de visión.
+
+Sin embargo, puedo ayudarte con consultas textuales sobre productos, pedidos y más.]
+
+${prompt}`,
       });
     } else {
       messages.push({

@@ -22,6 +22,8 @@ export class McpToolsService {
   ) {
     this.apiBaseUrl = this.configService.get<string>('API_REST_URL') || 'http://localhost:3000';
     this.wsServerUrl = this.configService.get<string>('WEBSOCKET_URL') || 'http://localhost:8080';
+    this.logger.log(`API Base URL: ${this.apiBaseUrl}`);
+    this.logger.log(`WebSocket URL: ${this.wsServerUrl}`);
   }
 
   /**
@@ -37,6 +39,8 @@ export class McpToolsService {
           return await this.consultarProductos(toolCall.args);
         case 'estado_pedido':
           return await this.estadoPedido(toolCall.args);
+        case 'listar_pedidos':
+          return await this.listarPedidos(toolCall.args);
         case 'crear_pedido':
           return await this.crearPedido(toolCall.args);
         case 'registrar_cliente':
@@ -62,33 +66,45 @@ export class McpToolsService {
    * Herramienta 1: Consultar Productos
    * GET /productos
    */
-  private async consultarProductos(args: Record<string, any>): Promise<ToolResult> {
+  private async consultarProductos(args?: Record<string, any>): Promise<ToolResult> {
     try {
+      const url = `${this.apiBaseUrl}/productos`;
+      this.logger.debug(`Consultando productos en: ${url}`);
+      
       const response = await firstValueFrom(
-        this.httpService.get(`${this.apiBaseUrl}/productos`),
+        this.httpService.get(url),
       );
 
       let productos = response.data;
 
-      // Filtrar por categoría si se especifica
-      if (args.categoria) {
+      // Filtrar por categoría si se especifica (verificando que args exista)
+      if (args && args.categoria) {
         productos = productos.filter((p: any) =>
           p.nombre?.toLowerCase().includes(args.categoria.toLowerCase()) ||
           p.descripcion?.toLowerCase().includes(args.categoria.toLowerCase()),
         );
       }
 
+      // Agrupar productos por categoría para mejor presentación
+      const productosPorCategoria = productos.reduce((acc: any, p: any) => {
+        const categoria = p.categoria || 'Otros';
+        if (!acc[categoria]) acc[categoria] = [];
+        acc[categoria].push({
+          nombre: p.nombre,
+          descripcion: p.descripcion,
+          precio: `$${parseFloat(p.precio).toFixed(2)}`,
+          presentacion: p.unidad_medida || 'unidad',
+          disponible: p.estado === 'activo',
+        });
+        return acc;
+      }, {});
+
       return {
         success: true,
         data: {
-          total: productos.length,
-          productos: productos.map((p: any) => ({
-            id: p.id,
-            nombre: p.nombre,
-            descripcion: p.descripcion,
-            precio: p.precio,
-            stock: p.stock,
-          })),
+          mensaje: `Tenemos ${productos.length} productos disponibles`,
+          categorias: Object.keys(productosPorCategoria),
+          catalogo: productosPorCategoria,
         },
       };
     } catch (error) {
@@ -102,7 +118,7 @@ export class McpToolsService {
    */
   private async estadoPedido(args: Record<string, any>): Promise<ToolResult> {
     if (!args.pedido_id) {
-      return { success: false, error: 'Se requiere el ID del pedido' };
+      return { success: false, error: 'Por favor proporciona el número de pedido para consultarlo' };
     }
 
     try {
@@ -111,24 +127,98 @@ export class McpToolsService {
       );
 
       const pedido = response.data;
+      const fecha = new Date(pedido.fecha || pedido.createdAt);
+      const fechaFormateada = fecha.toLocaleDateString('es-ES', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
 
       return {
         success: true,
         data: {
-          id: pedido.id,
+          numero_pedido: `#${pedido.id}`,
           estado: pedido.estado,
-          fecha: pedido.fecha || pedido.createdAt,
-          cliente: pedido.cliente,
-          detalles: pedido.detalles,
-          total: pedido.total,
+          fecha: fechaFormateada,
+          cliente: pedido.cliente?.nombre || 'Cliente',
+          total: pedido.total ? `$${parseFloat(pedido.total).toFixed(2)}` : 'Por calcular',
         },
       };
     } catch (error) {
       if (error.response?.status === 404) {
-        return { success: false, error: `Pedido #${args.pedido_id} no encontrado` };
+        return { success: false, error: `No encontramos ningún pedido con ese número. ¿Podrías verificarlo?` };
       }
       throw new Error(`Error al consultar pedido: ${error.message}`);
     }
+  }
+
+  /**
+   * Herramienta 2.5: Listar Pedidos
+   * GET /pedidos
+   */
+  private async listarPedidos(args?: Record<string, any>): Promise<ToolResult> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(`${this.apiBaseUrl}/pedidos`),
+      );
+
+      const pedidos = response.data;
+
+      if (!pedidos || pedidos.length === 0) {
+        return {
+          success: true,
+          data: {
+            mensaje: 'No hay pedidos registrados todavía',
+            pedidos: [],
+          },
+        };
+      }
+
+      // Filtrar por cliente si se proporciona
+      let pedidosFiltrados = pedidos;
+      if (args?.cliente_id) {
+        pedidosFiltrados = pedidos.filter((p: any) => p.clienteId === args.cliente_id || p.cliente?.id === args.cliente_id);
+      }
+
+      // Filtrar por estado si se proporciona
+      if (args?.estado) {
+        pedidosFiltrados = pedidosFiltrados.filter((p: any) => p.estado === args.estado);
+      }
+
+      // Formatear pedidos de forma amigable
+      const pedidosFormateados = pedidosFiltrados.map((pedido: any) => {
+        const fecha = new Date(pedido.fecha || pedido.createdAt);
+        return {
+          numero: `#${pedido.id}`,
+          estado: this.formatearEstado(pedido.estado),
+          fecha: fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }),
+          cliente: pedido.cliente?.nombre || 'Cliente',
+          total: pedido.total ? `$${parseFloat(pedido.total).toFixed(2)}` : 'Por calcular',
+        };
+      });
+
+      return {
+        success: true,
+        data: {
+          mensaje: `Encontramos ${pedidosFormateados.length} pedido(s)`,
+          pedidos: pedidosFormateados,
+        },
+      };
+    } catch (error) {
+      this.logger.error(`Error al listar pedidos: ${error.message}`);
+      throw new Error(`Error al listar pedidos: ${error.message}`);
+    }
+  }
+
+  private formatearEstado(estado: string): string {
+    const estados: Record<string, string> = {
+      'pendiente': '⏳ Pendiente',
+      'en_proceso': '🔄 En proceso',
+      'listo': '✅ Listo para entrega',
+      'entregado': '📦 Entregado',
+      'cancelado': '❌ Cancelado',
+    };
+    return estados[estado] || estado;
   }
 
   /**
@@ -139,7 +229,7 @@ export class McpToolsService {
     if (!args.cliente_id || !args.detalles || args.detalles.length === 0) {
       return {
         success: false,
-        error: 'Se requiere cliente_id y al menos un detalle de producto',
+        error: 'Para crear un pedido necesito saber quién es el cliente y qué productos desea',
       };
     }
 
@@ -169,10 +259,10 @@ export class McpToolsService {
       return {
         success: true,
         data: {
-          mensaje: '¡Pedido creado exitosamente!',
-          pedido_id: pedido.id,
-          estado: pedido.estado,
-          total: pedido.total,
+          mensaje: '¡Pedido creado exitosamente! 🎉',
+          numero_pedido: `#${pedido.id}`,
+          estado: 'Pendiente de procesamiento',
+          total: pedido.total ? `$${parseFloat(pedido.total).toFixed(2)}` : 'Por calcular',
         },
       };
     } catch (error) {
@@ -188,7 +278,7 @@ export class McpToolsService {
     if (!args.nombre || !args.email) {
       return {
         success: false,
-        error: 'Se requiere nombre y email del cliente',
+        error: 'Para registrar un nuevo cliente necesito al menos su nombre y correo electrónico',
       };
     }
 
@@ -209,15 +299,15 @@ export class McpToolsService {
       return {
         success: true,
         data: {
-          mensaje: '¡Cliente registrado exitosamente!',
-          cliente_id: cliente.id,
+          mensaje: `¡Cliente registrado exitosamente! 🎉`,
           nombre: cliente.nombre,
           email: cliente.email,
+          bienvenida: `Bienvenido/a ${cliente.nombre} a Chifles Deliciosos`,
         },
       };
     } catch (error) {
       if (error.response?.status === 409) {
-        return { success: false, error: 'Ya existe un cliente con ese email' };
+        return { success: false, error: 'Ya existe un cliente registrado con ese correo electrónico' };
       }
       throw new Error(`Error al registrar cliente: ${error.message}`);
     }
