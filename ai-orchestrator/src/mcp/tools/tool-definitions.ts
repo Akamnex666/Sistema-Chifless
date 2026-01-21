@@ -30,16 +30,31 @@ export const MCP_TOOLS: ToolDefinition[] = [
   },
   {
     name: 'estado_pedido',
-    description: 'Consulta el estado actual de un pedido dado su ID. Devuelve información como estado (pendiente, en proceso, listo, entregado), cliente, productos y total.',
+    description: 'Consulta el estado actual de un pedido específico dado su número. Devuelve información como estado, cliente, productos y total.',
     parameters: {
       type: 'object',
       properties: {
         pedido_id: {
           type: 'number',
-          description: 'ID único del pedido a consultar',
+          description: 'Número del pedido a consultar',
         },
       },
       required: ['pedido_id'],
+    },
+  },
+  {
+    name: 'listar_pedidos',
+    description: 'Obtiene la lista de todos los pedidos del sistema. Usa esta herramienta cuando el usuario quiera ver pedidos, el historial de pedidos, o preguntar por "mis pedidos". IMPORTANTE: No requiere parámetros - llámala sin argumentos para obtener todos los pedidos.',
+    parameters: {
+      type: 'object',
+      properties: {
+        estado: {
+          type: 'string',
+          description: 'Filtrar por estado del pedido (opcional)',
+          enum: ['pendiente', 'en_proceso', 'listo', 'entregado', 'cancelado'],
+        },
+      },
+      required: [],
     },
   },
   {
