@@ -40,6 +40,7 @@ export class PedidosController {
     return this.pedidosService.findOne(id);
   }
 
+  @Public()
   @Put(':id')
   async update(
     @Param('id', ParseIntPipe) id: number,
@@ -57,6 +58,9 @@ export class PedidosController {
         break;
       case 'cancelado':
         await notifyWebSocket('order.cancelled', actualizado);
+        break;
+      case 'pagado':
+        await notifyWebSocket('order.paid', actualizado);
         break;
     }
 
